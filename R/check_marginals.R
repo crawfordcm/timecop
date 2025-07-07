@@ -1,15 +1,16 @@
 #' Check that user-specified marginal distributions are supported
+#'
 #' @param family List. A list of length d containing the names of marginal distributions
 #' @keywords internal
 
 check_marginals <- function(family, d) {
 
-  if (is.null(family)){
-    stop("timecop error: user must provide a list of marginal distributions", call. = FALSE)
+  if (is.null(family)) {
+    stop("User must provide a list of marginal distributions", call. = FALSE)
   }
 
-  if (length(family) != d){
-    stop("timecop error: number of families must match number of variables", call. = FALSE)
+  if (length(family) != d) {
+    stop("Number of families must match number of variables", call. = FALSE)
   }
 
   # supported marginals
