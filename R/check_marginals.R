@@ -1,6 +1,7 @@
 #' Check that user-specified marginal distributions are supported
 #'
 #' @param family List. A list of length d containing the names of marginal distributions
+#' @param d Numeric. The number of variables
 #' @keywords internal
 
 check_marginals <- function(family, d) {
