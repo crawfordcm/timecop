@@ -30,7 +30,7 @@ latent_var_link <- function(data, d, n, k, family) {
       if (j >= i) {
         param_list[[2]] <- param_hat[[j]]
         family_list[[2]] <- family[[j]]
-        ell_ij_hat[,i,j] <- l_ij_func(param_list, k, family_list)
+        ell_ij_hat[,i,j] <- link_coefs(param_list, k, family_list)
       } else {
         ell_ij_hat[,i,j] <- ell_ij_hat[,j,i]
       }
