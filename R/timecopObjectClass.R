@@ -16,6 +16,18 @@ check_timecop <- function(object) {
 #'
 #' An object to be used with fit_timecop
 #'
+#' @slot data Matrix. A d (variables) by n (time points) multivariate time series matrix
+#' @slot cov_x_hat Array. An array of observed covariances
+#' @slot cov_z_hat Array. An array of latent covariances
+#' @slot gamma_hat Matrix. A matrix of stacked covariances (lag 1 to p)
+#' @slot Gamma_hat Matrix. A Toeplitz matrix of covariances
+#' @slot d Numeric. The number of variables
+#' @slot p Numeric. The VAR order. Default is 1
+#' @slot n Numeric. Time series length
+#' @slot marg_num Numeric. Total number of marginal parameters
+#' @slot family List. A list of marginal distributions
+#' @slot pd_approx Logical. A logical indicating if adjustments were made to ensure positive definiteness
+#' @export
 
 
 setClass(
