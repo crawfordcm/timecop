@@ -21,14 +21,17 @@ check_timecop <- function(object) {
 setClass(
   Class = "timecop",
   slots = list(
-    cov_z_hat = "array",
-    #gamma_hat = "matrix", # lag 1 matrix (if p = 1)
-    #Gamma_hat = "matrix", # lag 0 matrix (if p = 1)
+    data = "matrix",
     cov_x_hat = "array",
+    cov_z_hat = "array",
+    gamma_hat = "matrix", # lag 1 matrix (if p = 1)
+    Gamma_hat = "matrix", # lag 0 matrix (if p = 1)
     d = "numeric",
     p = "numeric",
     n = "numeric",
-    family = "list"
+    marg_num = "numeric",
+    family = "list",
+    pd_approx = "logical"
   ), validity = check_timecop
 )
 
@@ -37,13 +40,11 @@ setClass(
 #' @param data Matrix. An n (time points) by d (variables) multivariate time series matrix
 #' @param p Numeric. The VAR order. Defualt is 1
 #' @param family List. A list of length d with the names of each distribution
-#' @param grid Numeric. A vector of grid values used for interpolation. Default is NULL
 #' @param k Numeric. The value at which Hermite coefficient infinite sums terminate. Default is 100
 #' @export
 timecop <- function(data = NULL,
                     p = 1,
                     family = NULL,
-                    grid = NULL,
                     k = 100) {
 
   if (p != 1) {
@@ -59,24 +60,26 @@ timecop <- function(data = NULL,
   # check if marginals are correctly specified
   check_marginals(family, d)
 
-  # setup grid for interpolation
-  if (is.null(grid)) {
-    grid_u <- c(seq(-1,-0.71,0.01), seq(-0.7,0,0.2), seq(0.1,0.7,0.2), seq(0.71,1,0.01))
+  # get total number of marginal parameters
+  if ("Gaussian" %in% family) {
+    marg_num <- d + length(which(family == "Gaussian"))
   } else {
-    grid_u <- grid
+    marg_num <- d
   }
 
   # compute observed and latent covariances
   cov_x_hat  <- observed_var_cov(data, d, p, n)
   ell_ij_hat <- latent_var_link(data, d, n, k, family)
-  cov_z_hat  <- latent_var_invlink(cov_x_hat, d, p, ell_ij_hat, grid_u)
+  cov_z_hat  <- latent_var_invlink(cov_x_hat, d, p, ell_ij_hat)
 
-  # construct implied latent covariances
+  # construct covariance matrices for Yule-Walker
+  # stacked covariances
   gamma_hat <- array(NA,dim=c(p*d,d))
   for (h in 1:p) {
     gamma_hat[((h-1)*d+1):(h*d),] <- cov_z_hat[,,(p+1-h)]
   }
 
+  # Toeplitz covariance matrix
   Gamma_hat <- array(NA,dim=c(p*d,p*d))
   for (i in 1:p) {
     for (j in 1:p) {
@@ -114,13 +117,20 @@ timecop <- function(data = NULL,
     }
   }
 
-  obj <- new("timecop",
-             cov_z_hat = cov_z_hat,
-             cov_x_hat = cov_x_hat,
-             d = d,
-             p = p,
-             n = n,
-             family = family)
+  obj <- new(
+    "timecop",
+    data = data,
+    cov_x_hat = cov_x_hat,
+    cov_z_hat = cov_z_hat,
+    gamma_hat = gamma_hat,
+    Gamma_hat = Gamma_hat,
+    d = d,
+    p = p,
+    n = n,
+    marg_num = marg_num,
+    family = family,
+    pd_approx = pd_approx
+  )
 
   return(obj)
 
@@ -128,8 +138,33 @@ timecop <- function(data = NULL,
 
 #' Fit function for timecop
 #'
+#' @usage fit_timecop(object)
 #'
 
+setGeneric(name = "fit_timecop", def = function(object){standardGeneric("fit_timecop")})
+setMethod(f = "fit_timecop", signature = "timecop", definition = function(object) {
+
+  est <- fit_var(
+    object@gamma_hat,
+    object@Gamma_hat,
+    object@d
+  )
+
+  se <- se_var(
+    object@data,
+    object@gamma_hat,
+    object@Gamma_hat,
+    object@cov_x_hat,
+    object@d,
+    object@p,
+    object@n,
+    object@family,
+    object@marg_num
+  )
+
+  return(list(est, se))
+
+})
 
 
 
