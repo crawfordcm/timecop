@@ -50,14 +50,12 @@ setClass(
 #' Construct an object of class timecop
 #'
 #' @param data Matrix. An n (time points) by d (variables) multivariate time series matrix
-#' @param p Numeric. The VAR order. Defualt is 1
 #' @param family List. A list of length d with the names of each distribution
-#' @param k Numeric. The value at which Hermite coefficient infinite sums terminate. Default is 100
+#' @param p Numeric. The VAR order. Default is 1
 #' @export
 timecop <- function(data = NULL,
-                    p = 1,
                     family = NULL,
-                    k = 100) {
+                    p = 1) {
 
   if (p != 1) {
     stop("Only lag 1 is currently supported", call. = FALSE)
@@ -78,6 +76,8 @@ timecop <- function(data = NULL,
   } else {
     marg_num <- d
   }
+
+  k <- 100
 
   # compute observed and latent covariances
   cov_x_hat  <- observed_var_cov(data, d, p, n)
@@ -151,7 +151,7 @@ timecop <- function(data = NULL,
 #' Fit function for timecop
 #'
 #' @usage fit_timecop(object)
-#'
+#' @param object timecop object built using \code{timecop}
 
 setGeneric(name = "fit_timecop", def = function(object){standardGeneric("fit_timecop")})
 setMethod(f = "fit_timecop", signature = "timecop", definition = function(object) {

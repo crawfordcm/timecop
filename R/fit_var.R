@@ -3,6 +3,7 @@
 #' @param gamma_hat Matrix. Stacked covariances matrix
 #' @param Gamma_hat Matrix. Toeplitz covariance matrix
 #' @param d Numeric. The number of variables
+#' @keywords internal
 
 fit_var <- function(gamma_hat, Gamma_hat, d) {
 
