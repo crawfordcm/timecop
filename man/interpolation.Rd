@@ -13,6 +13,9 @@ interpolation(coef, u, v)
 
 \item{v}{Numeric. A vector of observed covariances}
 }
+\value{
+A numeric vector of inverse link function values.
+}
 \description{
 Compute inverse link function to get latent covariances
 }

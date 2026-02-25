@@ -13,6 +13,9 @@ hermite_coefs(param, k, family)
 
 \item{family}{Character. Name of marginal distribution}
 }
+\value{
+A numeric vector of k Hermite coefficients.
+}
 \description{
 Compute Hermite coefficients
 }

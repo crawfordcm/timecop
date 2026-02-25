@@ -4,7 +4,7 @@
 \alias{numderiv}
 \title{Compute numerical derivatives}
 \usage{
-numderiv(data, cov_x_hat, d, p, n, family)
+numderiv(data, cov_x_hat, d, p, n, family, corr)
 }
 \arguments{
 \item{data}{Matrix. A d by n multivariate time series matrix}
@@ -18,6 +18,11 @@ numderiv(data, cov_x_hat, d, p, n, family)
 \item{n}{Numeric. Time series length}
 
 \item{family}{List. A list of marginal distributions}
+
+\item{corr}{Logical. Correlations or covariances}
+}
+\value{
+A Jacobian matrix of numerical derivatives.
 }
 \description{
 Compute numerical derivatives

@@ -4,7 +4,7 @@
 \alias{se_var}
 \title{Compute standard errors}
 \usage{
-se_var(data, gamma_hat, Gamma_hat, cov_x_hat, d, p, n, family, marg_num)
+se_var(data, gamma_hat, Gamma_hat, cov_x_hat, d, p, n, family, marg_num, corr)
 }
 \arguments{
 \item{data}{Matrix. A d by n multivariate time series matrix}
@@ -24,6 +24,11 @@ se_var(data, gamma_hat, Gamma_hat, cov_x_hat, d, p, n, family, marg_num)
 \item{family}{List. A list of marginal distributions}
 
 \item{marg_num}{Numeric. The total number of marginal parameters}
+
+\item{corr}{Logical. Correlations or covariances (SEs only available for covariances)}
+}
+\value{
+A d x d matrix of standard errors for the VAR(1) coefficient estimates.
 }
 \description{
 Compute standard errors

@@ -3,6 +3,7 @@
 #' @param coef Numeric. A vector of link function coefficients
 #' @param u Numeric. A vector of grid values
 #' @param v Numeric. A vector of observed covariances
+#' @return A numeric vector of inverse link function values.
 #' @keywords internal
 
 interpolation <- function(coef,u,v){
@@ -24,8 +25,7 @@ interpolation <- function(coef,u,v){
     if ( v[i] < knot[1] |  v[i] > knot[n]){
       if ( v[i] < knot[1] ){
         # Cutoff L(u) < -1
-        L_inv_v[i] <- -1; #change to smallest possible value of knots (knot[1])?
-        #L_inv_v[i] <- knot[1]
+        L_inv_v[i] <- -1;
         next;
       }
       else {

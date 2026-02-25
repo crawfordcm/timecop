@@ -3,9 +3,12 @@
 #' @param data Matrix. A d by n multivariate time series matrix
 #' @param d Numeric. The number of variables
 #' @param n Numeric. Time series length
+#' @param family List. A list of marginal distributions
+#' @return A long-run variance-covariance matrix.
+#' @importFrom cointReg getLongRunVar
 #' @keywords internal
 
-longrun_var <- function(data, d, n) {
+longrun_var <- function(data, d, n, family) {
 
   # center data
   dat_c <- data - rowMeans(data)
@@ -22,18 +25,29 @@ longrun_var <- function(data, d, n) {
     b  <- vec(rbind(b1, b2))
 
     # for the Gaussian case (see AN_counts)
-    if ("Gaussian" %in% family){ # note that this is set up for the case with d = 3 and 3rd component is Gaussian
-      rt <- t(cbind(t(xt), matrix(dat_c[3,i]^2, 1, 1)))
+    if ("Gaussian" %in% family){
+      rt <- c()
+      s <- 1
+      for (j in seq_along(family)){
+        if (family[[j]] == "Gaussian") {
+          rt <- c(rt, xt[j], xt[j]^2)
+          s <- s + 1
+        } else {
+          rt <- c(rt, xt[j])
+        }
+      }
+
+      rt <- matrix(rt, nrow = length(rt), 1)
+
       F_list[[i-1]] <- rbind(rt,a,b)
+
     } else {
-      F_list[[i-1]] <- rbind(matrix(dat_c[,i-1], d, 1), a, b) #sol1
+      F_list[[i-1]] <- rbind(matrix(dat_c[,i-1], d, 1), a, b)
     }
-    #F_list[[i-1]] <- rbind(xt,a,b) #sol 2
   }
 
   F_mat <- do.call(cbind, F_list)
 
-  #sol1
   longrun <- getLongRunVar(t(F_mat), bandwidth = "nw", kernel = "ba", demeaning = TRUE, check = FALSE)
   Sigma   <- longrun$Omega
 

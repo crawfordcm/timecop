@@ -4,7 +4,7 @@
 \alias{link_coefs}
 \title{Compute Hermite coefficients and link function constants}
 \usage{
-link_coefs(param_list, k, family_list)
+link_coefs(param_list, k, family_list, corr)
 }
 \arguments{
 \item{param_list}{List. A list of marginal parameters}
@@ -12,6 +12,11 @@ link_coefs(param_list, k, family_list)
 \item{k}{Numeric. The value at which Hermite coefficient infinite sums terminate. Default is 100}
 
 \item{family_list}{List. List of marginal distributions}
+
+\item{corr}{Logical. Correlations or covariances}
+}
+\value{
+A numeric vector of k link function coefficients.
 }
 \description{
 Compute Hermite coefficients and link function constants

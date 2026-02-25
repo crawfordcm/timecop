@@ -4,9 +4,12 @@
 #' @param d Numeric. The number of variables
 #' @param p Numeric. The VAR order. Default is 1
 #' @param n Numeric. Time series length
+#' @param corr Logical. Correlations or covariances
+#' @return A d x d x (2p+1) array of observed covariance (or correlation) matrices
+#'   at lags -p, ..., 0, ..., p.
 #' @keywords internal
 
-observed_var_cov <- function(data, d, p, n) {
+observed_var_cov <- function(data, d, p, n, corr) {
 
   cov_x_hat <- array(NA, dim = c(d, d, 2*p + 1))
   for (i in seq_len(d)) {
@@ -31,7 +34,13 @@ observed_var_cov <- function(data, d, p, n) {
         } else {
           idx1 <- idx2 <- 1:n
         }
-        cov_x_hat[i, j, h] <- cov(data[i, idx1], data[j, idx2]) * (n - abs_lag - 1) / (n - abs_lag)
+
+        if (corr == FALSE) {
+          cov_x_hat[i, j, h] <- cov(data[i, idx1], data[j, idx2]) * (n - abs_lag - 1) / (n - abs_lag)
+        } else {
+          cov_x_hat[i, j, h] <- cor(data[i, idx1], data[j, idx2]) * (n - abs_lag - 1) / (n - abs_lag) # check correlations
+        }
+
       }
     }
   }

@@ -4,6 +4,8 @@
 #' @param d Numeric. Number of variables
 #' @param p Numeric. The VAR order. Default is 1
 #' @param ell_ij_hat Array. An array of link function coefficients
+#' @return An array of latent Gaussian covariance matrices with the same
+#'   dimensions as `cov_x_hat`.
 #' @keywords internal
 
 latent_var_invlink <- function(cov_x_hat, d, p, ell_ij_hat){

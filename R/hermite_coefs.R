@@ -3,6 +3,7 @@
 #' @param param Numeric. Estimate of marginal parameter
 #' @param k Numeric. The value at which Hermite coefficient infinite sums terminate. Default is 100
 #' @param family Character. Name of marginal distribution
+#' @return A numeric vector of k Hermite coefficients.
 #' @keywords internal
 
 hermite_coefs <- function(param, k, family){
@@ -30,7 +31,7 @@ hermite_coefs <- function(param, k, family){
 
       # Hermite polynomials/coefficients
       if (c == 1 | c == 0) { # make sure Her isn't Inf
-        coef <- 0
+        coef <- 0 # see jia 2021
       } else {
         her <- as.function(Polys[[i]])
         hk <- her(q)
@@ -39,6 +40,10 @@ hermite_coefs <- function(param, k, family){
       return(coef)
 
     }))}))
+
+  } else if (family == "Ordinal"){
+
+
 
   } else if (family == "Gaussian"){
     g <- numeric(k)

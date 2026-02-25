@@ -13,6 +13,9 @@ fit_var(gamma_hat, Gamma_hat, d)
 
 \item{d}{Numeric. The number of variables}
 }
+\value{
+A d x d matrix of estimated VAR(1) coefficients.
+}
 \description{
 Get Yule-Walker estimates
 }

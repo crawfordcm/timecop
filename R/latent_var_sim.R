@@ -1,14 +1,65 @@
-#' Simulate multivariate time series
+#' Simulate multivariate time series from a latent Gaussian VAR
 #'
-#' @param d Numeric. The number of variables
-#' @param n Numeric. Time series length
-#' @param p Numeric. The VAR order
-#' @param param List. A list of marginal parameters
-#' @param phi_lv Matrix. A d by d transition matrix
-#' @param family List. A list of marginal distributions
+#' Generates a multivariate discrete-valued time series from a latent Gaussian
+#' VAR process. The latent Gaussian series is transformed to discrete marginals
+#' (Bernoulli, Poisson, or Gaussian) via the probability integral transform.
+#'
+#' @param d Numeric. The number of variables.
+#' @param n Numeric. Time series length.
+#' @param p Numeric. The VAR order. Currently only p=1 is supported.
+#' @param param List. A list of length d containing marginal parameters. For
+#'   Bernoulli, the success probability; for Poisson, the rate parameter.
+#' @param phi_lv Matrix. A d by d transition matrix for the latent VAR process.
+#' @param family List. A list of length d with marginal distribution names.
+#'   Supported: `"Bernoulli"`, `"Poisson"`, `"Gaussian"`.
+#' @return A list with components:
+#'   \item{X_t}{d x n matrix of observed (discrete) time series.}
+#'   \item{Z_t}{d x n matrix of latent Gaussian time series.}
+#'   \item{A_true}{d x d x p array of true (scaled) VAR coefficient matrices.}
+#'   \item{Sigma_true}{d x d innovation covariance matrix.}
+#'   \item{beta_true}{Vectorized VAR coefficients.}
+#'   \item{Y_vec}{Vectorized response for observed data.}
+#'   \item{Z_bmat}{Block diagonal design matrix for observed data.}
+#'   \item{Y_mat}{Response matrix for observed data.}
+#'   \item{X_mat}{Predictor matrix for observed data.}
+#'   \item{Y_vec_test}{Vectorized response for latent data.}
+#'   \item{Z_bmat_test}{Block diagonal design matrix for latent data.}
+#'   \item{Y_mat_test}{Response matrix for latent data.}
+#'   \item{X_mat_test}{Predictor matrix for latent data.}
+#'   \item{param}{Input marginal parameters.}
+#' @examples
+#' sim <- latent_var_sim(
+#'   d = 2, n = 100, p = 1,
+#'   param = list(0.5, 0.3),
+#'   phi_lv = matrix(c(0.3, 0.1, 0.1, 0.3), 2, 2),
+#'   family = list("Bernoulli", "Bernoulli")
+#' )
+#' dim(sim$X_t)  # 2 x 100
+#' @importFrom mvtnorm rmvnorm
+#' @importFrom expm %^%
+#' @importFrom Matrix bdiag
 #' @export
 
 latent_var_sim <- function(d, n, p, param, phi_lv, family){
+
+  if (!is.numeric(d) || length(d) != 1 || d < 1 || d != as.integer(d)) {
+    stop("'d' must be a positive integer", call. = FALSE)
+  }
+  if (!is.numeric(n) || length(n) != 1 || n < 1 || n != as.integer(n)) {
+    stop("'n' must be a positive integer", call. = FALSE)
+  }
+  if (!is.numeric(p) || length(p) != 1 || p != 1) {
+    stop("Only p=1 is currently supported", call. = FALSE)
+  }
+  if (!is.list(param) || length(param) != d) {
+    stop("'param' must be a list of length d", call. = FALSE)
+  }
+  if (!is.matrix(phi_lv) || nrow(phi_lv) != d || ncol(phi_lv) != d) {
+    stop("'phi_lv' must be a d x d matrix", call. = FALSE)
+  }
+  if (!is.list(family) || length(family) != d) {
+    stop("'family' must be a list of length d", call. = FALSE)
+  }
 
   Sigma_star <- diag(1,nrow=d)
   A_star <- array(phi_lv,dim=c(d,d,p))
@@ -30,7 +81,6 @@ latent_var_sim <- function(d, n, p, param, phi_lv, family){
       test.eigen <- max(abs(eigen(test.mat)$values))
     }
   }
-  A_star <- A_star*decay.rate
 
   if (p == 1){
     Sigma_U_star <- as(Sigma_star,"sparseMatrix")
@@ -45,14 +95,12 @@ latent_var_sim <- function(d, n, p, param, phi_lv, family){
   diff <- 1
   order <- 0
   Sigma_Y_star <- Sigma_U_star
-  while( diff > 1e-5){
+  while( diff > 1e-8){
     order <- order + 1
     if ( d == 1){
-      #update_mat <- C_star^order * Sigma_U_star * (t(C_star))^order
       update_mat <- C_star^order * Sigma_U_star * as(C_star, "TsparseMatrix")^order
     }else{
-      #update_mat <- C_star^order %*% Sigma_U_star %*% (t(C_star))^order
-      update_mat <- C_star^order %*% Sigma_U_star %*% as(C_star, "TsparseMatrix")^order
+      update_mat <- as.matrix(C_star) %^% order %*% as.matrix(Sigma_U_star) %*% t((as.matrix(C_star)) %^% order)
     }
     Sigma_Y_star <- Sigma_Y_star + update_mat
     if ( d == 1){

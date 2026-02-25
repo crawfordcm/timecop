@@ -7,7 +7,10 @@
 setup_data(data)
 }
 \arguments{
-\item{data}{Matrix.  An n (time points) by d (variables) multivariate time series matrix}
+\item{data}{Matrix. An n (time points) by d (variables) multivariate time series matrix}
+}
+\value{
+A d x n numeric matrix (transposed from input).
 }
 \description{
 Check and setup data

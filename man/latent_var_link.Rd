@@ -4,7 +4,7 @@
 \alias{latent_var_link}
 \title{Latent link function}
 \usage{
-latent_var_link(data, d, n, k, family)
+latent_var_link(data, d, n, k, family, corr)
 }
 \arguments{
 \item{data}{Matrix. A d by n multivariate time series matrix}
@@ -16,6 +16,11 @@ latent_var_link(data, d, n, k, family)
 \item{k}{Numeric. The value at which Hermite coefficient infinite sums terminate. Default is 100}
 
 \item{family}{List. A list of length d with the names of each distribution}
+
+\item{corr}{Logical. Correlations or covariances}
+}
+\value{
+A k x d x d array of link function coefficients.
 }
 \description{
 Latent link function

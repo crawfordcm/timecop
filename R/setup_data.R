@@ -1,6 +1,7 @@
 #' Check and setup data
 #'
-#' @param data Matrix.  An n (time points) by d (variables) multivariate time series matrix
+#' @param data Matrix. An n (time points) by d (variables) multivariate time series matrix
+#' @return A d x n numeric matrix (transposed from input).
 #' @keywords internal
 
 setup_data <- function(data) {
@@ -15,6 +16,10 @@ setup_data <- function(data) {
 
   if (!is.numeric(data)) {
     stop("Data must be numeric", call. = FALSE)
+  }
+
+  if (any(is.na(data))) {
+    stop("Data contains NA values; remove before proceeding", call. = FALSE)
   }
 
   # transpose to conform with estimation code

@@ -4,7 +4,7 @@
 \alias{latent_var_link_numderiv}
 \title{Latent link function for numderiv}
 \usage{
-latent_var_link_numderiv(d, n, param_hat, family)
+latent_var_link_numderiv(d, n, param_hat, family, corr)
 }
 \arguments{
 \item{d}{Numeric. The number of variables}
@@ -14,6 +14,11 @@ latent_var_link_numderiv(d, n, param_hat, family)
 \item{param_hat}{List. List of estimated marginal parameters}
 
 \item{family}{List. List of marginal distributions}
+
+\item{corr}{Logical. Correlations or covariances}
+}
+\value{
+A k x d x d array of link function coefficients.
 }
 \description{
 Latent link function for numderiv

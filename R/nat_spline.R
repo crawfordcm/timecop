@@ -2,6 +2,8 @@
 #'
 #' @param coef Numeric. A vector of link function coefficients
 #' @param u Numeric. A vector of grid values
+#' @return A list with three components: spline coefficients matrix, second
+#'   derivatives vector, and interval widths vector.
 #' @keywords internal
 
 nat_spline <- function(coef,u){

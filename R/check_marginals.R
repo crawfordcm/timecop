@@ -2,6 +2,7 @@
 #'
 #' @param family List. A list of length d containing the names of marginal distributions
 #' @param d Numeric. The number of variables
+#' @return `TRUE` invisibly if all checks pass; otherwise an error is thrown.
 #' @keywords internal
 
 check_marginals <- function(family, d) {

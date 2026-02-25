@@ -5,9 +5,11 @@
 #' @param n Numeric. Time series length
 #' @param k Numeric. The value at which Hermite coefficient infinite sums terminate. Default is 100
 #' @param family List. A list of length d with the names of each distribution
+#' @param corr Logical. Correlations or covariances
+#' @return A k x d x d array of link function coefficients.
 #' @keywords internal
 
-latent_var_link <- function(data, d, n, k, family) {
+latent_var_link <- function(data, d, n, k, family, corr) {
 
   # estimate marginal parameters
   # need to change for more parameterized marginals
@@ -19,7 +21,6 @@ latent_var_link <- function(data, d, n, k, family) {
   # Estimate coefficients of link function
   ell_ij_hat <- array(NA, dim = c(k,d,d))
   for (i in seq_len(d)) {
-    #dist_pair <- vector("numeric",length=2)
     param_list <- list()
     family_list <- list()
 
@@ -30,7 +31,7 @@ latent_var_link <- function(data, d, n, k, family) {
       if (j >= i) {
         param_list[[2]] <- param_hat[[j]]
         family_list[[2]] <- family[[j]]
-        ell_ij_hat[,i,j] <- link_coefs(param_list, k, family_list)
+        ell_ij_hat[,i,j] <- link_coefs(param_list, k, family_list, corr)
       } else {
         ell_ij_hat[,i,j] <- ell_ij_hat[,j,i]
       }

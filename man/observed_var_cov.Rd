@@ -4,7 +4,7 @@
 \alias{observed_var_cov}
 \title{Compute observed covariances}
 \usage{
-observed_var_cov(data, d, p, n)
+observed_var_cov(data, d, p, n, corr)
 }
 \arguments{
 \item{data}{Matrix. An n (time points) by d (variables) multivariate time series matrix}
@@ -14,6 +14,12 @@ observed_var_cov(data, d, p, n)
 \item{p}{Numeric. The VAR order. Default is 1}
 
 \item{n}{Numeric. Time series length}
+
+\item{corr}{Logical. Correlations or covariances}
+}
+\value{
+A d x d x (2p+1) array of observed covariance (or correlation) matrices
+at lags -p, ..., 0, ..., p.
 }
 \description{
 Compute observed covariances

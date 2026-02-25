@@ -1,2 +1,9 @@
 ^timecop\.Rproj$
 ^\.Rproj\.user$
+^LICENSE\.md$
+^README\.md$
+^cran-comments\.md$
+^\.github$
+^Rplots\.pdf$
+^CLAUDE\.md$
+^data-raw$

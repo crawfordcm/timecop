@@ -9,6 +9,8 @@
 #' @param n Numeric. Time series length
 #' @param family List. A list of marginal distributions
 #' @param marg_num Numeric. The total number of marginal parameters
+#' @param corr Logical. Correlations or covariances (SEs only available for covariances)
+#' @return A d x d matrix of standard errors for the VAR(1) coefficient estimates.
 #' @keywords internal
 
 se_var <- function(data,
@@ -19,9 +21,10 @@ se_var <- function(data,
                    p,
                    n,
                    family,
-                   marg_num) {
+                   marg_num,
+                   corr) {
 
-  jacob <- numderiv(data, cov_x_hat, d, p, n, family)
+  jacob <- numderiv(data, cov_x_hat, d, p, n, family, corr)
 
   # derivs wrt marginal params
   f1 <- jacob[1:d^2, 1:marg_num]
@@ -57,7 +60,7 @@ se_var <- function(data,
   Q1 <- rbind(vec(gamma_deriv),vec(Gamma_deriv))
   Q2 <- rbind(C,E)
 
-  Sigma <- longrun_var(data, d, n)
+  Sigma <- longrun_var(data, d, n, family)
 
   sigma11 <- Sigma[1:marg_num,1:marg_num]
   sigma21 <- Sigma[(marg_num+1):(marg_num+(p+1)^2*d^2),1:marg_num]

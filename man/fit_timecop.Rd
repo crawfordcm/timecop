@@ -2,10 +2,39 @@
 % Please edit documentation in R/timecopObjectClass.R
 \name{fit_timecop}
 \alias{fit_timecop}
-\title{Fit function for timecop}
+\alias{fit_timecop,timecop-method}
+\title{Fit a latent Gaussian VAR model}
 \usage{
 fit_timecop(object)
 }
+\arguments{
+\item{object}{A \linkS4class{timecop} object built using \code{\link[=timecop]{timecop()}}.}
+}
+\value{
+An object of class \code{"timecop_fit"} (a named list) with elements:
+\item{estimates}{A d x d matrix of estimated VAR(1) transition coefficients.}
+\item{se}{A d x d matrix of standard errors for the estimates.}
+\item{obj}{The original \code{\linkS4class{timecop}} object.}
+
+Use \code{summary()} on the result for a formatted table with z-values and
+p-values.
+}
 \description{
-Fit function for timecop
+Estimates the VAR(1) transition matrix and standard errors from a
+\linkS4class{timecop} object using the Yule-Walker method.
+}
+\examples{
+\donttest{
+sim <- latent_var_sim(
+  d = 2, n = 200, p = 1,
+  param = list(0.5, 0.5),
+  phi_lv = matrix(c(0.4, 0.2, 0.2, 0.4), 2, 2),
+  family = list("Bernoulli", "Bernoulli")
+)
+obj <- timecop(data = t(sim$X_t), family = list("Bernoulli", "Bernoulli"))
+results <- fit_timecop(obj)
+results$estimates       # coefficient matrix
+results$se              # standard errors
+summary(results)        # formatted summary table
+}
 }

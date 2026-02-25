@@ -1,0 +1,417 @@
+================================================================================
+  timecop: Complete Code Change Log
+  All changes made during CRAN-readiness refactor (v0.0.0.9000 -> v0.1.0)
+================================================================================
+
+================================================================================
+FILE: R/fit_var.R
+FUNCTION: fit_var()
+================================================================================
+
+BUG FIX: Corrected Yule-Walker matrix multiplication order.
+
+Old code (wrong for d > 1):
+  gamma_hat_Z <- as.vector(gamma_hat)
+  phi_hat <- matrix(t(as.matrix(bdiag(replicate(d, solve(Gamma_hat),
+    simplify = FALSE)) %*% matrix(gamma_hat_Z, d^2, 1))), nrow = d)
+
+  This computes: Phi = Gamma(0)^{-1} Gamma(1)  [left-multiply by inverse]
+
+New code (correct):
+  phi_hat <- t(solve(Gamma_hat) %*% t(gamma_hat))
+
+  This computes: Phi = Gamma(1) Gamma(0)^{-1}  [right-multiply by inverse]
+
+The Yule-Walker equation is Gamma(1) = Phi Gamma(0), so the correct solution
+is Phi = Gamma(1) Gamma(0)^{-1}. The two formulas are equivalent only when
+d=1 (scalar) or when Gamma(0)=I (correlation case).
+
+ADDED: Input validation for gamma_hat and Gamma_hat (must be matrices).
+ADDED: @return tag to roxygen documentation.
+
+================================================================================
+FILE: R/longrun_var.R
+FUNCTION: longrun_var()
+================================================================================
+
+BUG FIX: Added `family` as a formal parameter.
+
+Old signature: longrun_var(data, d, n)
+New signature: longrun_var(data, d, n, family)
+
+The function body references `family` (for Gaussian case handling), but the old
+code never passed it as an argument. In R's lexical scoping, it would find
+stats::family (the GLM constructor) instead of the intended family list,
+causing: Error in match(x, table, nomatch = 0L): 'match' requires vector arguments
+This meant standard errors could never be computed in the old code.
+
+BUG FIX: Generalized the Gaussian case in the long-run variance.
+
+Old code (hardcoded for d=3, 3rd variable Gaussian):
+  if ("Gaussian" %in% family){
+    rt <- t(cbind(t(xt), matrix(dat_c[3,i]^2, 1, 1)))
+
+New code (works for any d, any variable Gaussian):
+  if ("Gaussian" %in% family){
+    rt <- c()
+    s <- 1
+    for (j in seq_along(family)){
+      if (family[[j]] == "Gaussian") {
+        rt <- c(rt, xt[j], xt[j]^2)
+        s <- s + 1
+      } else {
+        rt <- c(rt, xt[j])
+      }
+    }
+    rt <- matrix(rt, nrow = length(rt), 1)
+
+REMOVED: Commented-out alternative solutions (#sol1, #sol 2 labels).
+ADDED: @importFrom cointReg getLongRunVar
+ADDED: @return tag to roxygen documentation.
+
+================================================================================
+FILE: R/se_var.R
+FUNCTION: se_var()
+================================================================================
+
+CHANGED: Added `corr` parameter to function signature.
+
+Old signature: se_var(data, gamma_hat, Gamma_hat, cov_x_hat, d, p, n, family, marg_num)
+New signature: se_var(data, gamma_hat, Gamma_hat, cov_x_hat, d, p, n, family, marg_num, corr)
+
+CHANGED: Passes `corr` through to numderiv().
+CHANGED: Passes `family` through to longrun_var() (was missing before).
+
+Old call: numderiv(data, cov_x_hat, d, p, n, family)
+New call: numderiv(data, cov_x_hat, d, p, n, family, corr)
+
+Old call: longrun_var(data, d, n)
+New call: longrun_var(data, d, n, family)
+
+ADDED: @param corr, @return tags to roxygen documentation.
+
+================================================================================
+FILE: R/numderiv.R
+FUNCTION: numderiv()
+================================================================================
+
+CHANGED: Added `corr` parameter to function signature and inner function.
+
+Old signature: numderiv(data, cov_x_hat, d, p, n, family)
+New signature: numderiv(data, cov_x_hat, d, p, n, family, corr)
+
+Old inner func: func <- function(x, d, marg_num, p, n, data, family)
+New inner func: func <- function(x, d, marg_num, p, n, data, family, corr)
+
+CHANGED: Passes `corr` through to latent_var_link_numderiv() and jacobian().
+ADDED: @importFrom numDeriv jacobian
+ADDED: @param corr, @return tags to roxygen documentation.
+
+================================================================================
+FILE: R/observed_var_cov.R
+FUNCTION: observed_var_cov()
+================================================================================
+
+CHANGED: Added `corr` parameter to function signature.
+
+Old signature: observed_var_cov(data, d, p, n)
+New signature: observed_var_cov(data, d, p, n, corr)
+
+ADDED: Correlation computation branch.
+
+Old code: always computed covariance.
+New code:
+  if (corr == FALSE) {
+    cov_x_hat[i, j, h] <- cov(...) * correction
+  } else {
+    cov_x_hat[i, j, h] <- cor(...) * correction
+  }
+
+ADDED: @param corr, @return tags to roxygen documentation.
+
+================================================================================
+FILE: R/latent_var_link.R
+FUNCTION: latent_var_link()
+================================================================================
+
+CHANGED: Added `corr` parameter to function signature.
+
+Old signature: latent_var_link(data, d, n, k, family)
+New signature: latent_var_link(data, d, n, k, family, corr)
+
+CHANGED: Passes `corr` through to link_coefs().
+REMOVED: Commented-out line: #dist_pair <- vector("numeric",length=2)
+ADDED: @param corr, @return tags to roxygen documentation.
+
+================================================================================
+FILE: R/latent_var_link_numderiv.R
+FUNCTION: latent_var_link_numderiv()
+================================================================================
+
+CHANGED: Added `corr` parameter to function signature.
+
+Old signature: latent_var_link_numderiv(d, n, param_hat, family)
+New signature: latent_var_link_numderiv(d, n, param_hat, family, corr)
+
+CHANGED: Passes `corr` through to link_coefs().
+ADDED: @param corr, @return tags to roxygen documentation.
+
+================================================================================
+FILE: R/link_coefs.R
+FUNCTION: link_coefs()
+================================================================================
+
+CHANGED: Added `corr` parameter to function signature.
+
+Old signature: link_coefs(param_list, k, family_list)
+New signature: link_coefs(param_list, k, family_list, corr)
+
+ADDED: SD computation for marginal distributions and correlation-scaled
+link coefficients.
+
+Old code: l_ij <- g_i*g_j*factorial(1:k)  (always)
+New code:
+  if (corr == FALSE) {
+    l_ij <- g_i*g_j*factorial(1:k)
+  } else {
+    l_ij <- g_i*g_j*factorial(1:k) / (sd_marg[[1]]*sd_marg[[2]])
+  }
+
+ADDED: @param corr, @return tags to roxygen documentation.
+
+================================================================================
+FILE: R/latent_var_invlink.R
+FUNCTION: latent_var_invlink()
+================================================================================
+
+REMOVED: Commented-out line: #grid_u <- seq(-1,1,0.5)
+ADDED: @return tag to roxygen documentation.
+
+================================================================================
+FILE: R/timecopObjectClass.R
+FUNCTIONS: timecop class, timecop(), fit_timecop()
+================================================================================
+
+CLASS CHANGES:
+  - Added `corr` slot (Logical) to the timecop S4 class.
+  - Removed inline comments from slot definitions.
+
+FUNCTION timecop() CHANGES:
+  - Added parameters: corr, pd_approx, eig.tol (previously hardcoded/missing).
+  - Added input validation for: corr, pd_approx, p, eig.tol, minimum n.
+  - Passes `corr` through to observed_var_cov() and latent_var_link().
+  - Stores `corr` in the S4 object.
+  - Passes `corr` from the object to se_var() in fit_timecop().
+
+  Old signature: timecop(data = NULL, family = NULL, p = 1)
+  New signature: timecop(data = NULL, family = NULL, p = 1, corr = FALSE,
+                         pd_approx = FALSE, eig.tol = 1e-4)
+
+  Old PD check (always ran, hardcoded tolerances, while loop):
+    pd_approx <- !is.positive.definite(Gamma_hat)
+    if (pd_approx) {
+      eig.tol <- 1e-6; posd.tol <- 1e-6
+      pd_mat <- nearPD(Gamma_hat, ...)
+      Gamma_hat <- as.matrix(pd_mat$mat)
+      while (any(abs(solve(Gamma_hat)) > 5)) { ... }
+    }
+
+  New PD check (user-controlled, delegates to check_pd(), checks both matrices):
+    if (pd_approx) {
+      cov_mats  <- check_pd(gamma_hat, Gamma_hat, d, eig.tol)
+      gamma_hat <- cov_mats[[1]]
+      Gamma_hat <- cov_mats[[2]]
+    }
+
+  ADDED: @return, @examples, @param (corr, pd_approx, eig.tol) to roxygen.
+
+FUNCTION fit_timecop() CHANGES:
+  - Passes object@corr to se_var().
+  - Passes object@marg_num and object@corr to se_var().
+  ADDED: @return, @examples, @aliases fit_timecop,timecop-method to roxygen.
+
+================================================================================
+FILE: R/latent_var_sim.R
+FUNCTION: latent_var_sim()
+================================================================================
+
+REMOVED: Line `A_star <- A_star*decay.rate` after the while loop.
+  This was a redundant/incorrect scaling — the decay was already applied
+  element-wise inside the while loop to off-diagonal entries.
+
+CHANGED: Convergence tolerance from 1e-5 to 1e-8.
+  Old: while( diff > 1e-5)
+  New: while( diff > 1e-8)
+
+CHANGED: Matrix power computation for d > 1 case.
+  Old: update_mat <- C_star^order %*% Sigma_U_star %*% as(C_star, "TsparseMatrix")^order
+  New: update_mat <- as.matrix(C_star) %^% order %*% as.matrix(Sigma_U_star) %*% t((as.matrix(C_star)) %^% order)
+
+  The old code used element-wise ^ on sparse matrices. The new code uses expm::%^%
+  for proper matrix exponentiation and explicit transpose.
+
+REMOVED: Commented-out alternatives for update_mat computation (4 lines).
+ADDED: Input validation for d, n, p, param, phi_lv, family.
+ADDED: @return (documenting all 14 list components), @examples.
+ADDED: @importFrom mvtnorm rmvnorm, @importFrom expm %^%, @importFrom Matrix bdiag.
+
+================================================================================
+FILE: R/setup_data.R
+FUNCTION: setup_data()
+================================================================================
+
+ADDED: NA check before transposition.
+  if (any(is.na(data))) {
+    stop("Data contains NA values; remove before proceeding", call. = FALSE)
+  }
+
+  The S4 validity check (check_timecop) also checks for NAs, but it runs
+  after the full estimation pipeline, which would crash with NAs before
+  reaching the validity check. This catches NAs early.
+
+ADDED: @return tag to roxygen documentation.
+
+================================================================================
+FILE: R/hermite_coefs.R
+FUNCTION: hermite_coefs()
+================================================================================
+
+REMOVED: Testing comment from Poisson sum limit.
+  Old: lapply(0:50, function(j) { # changed to 500 for testing (og 50)
+  New: lapply(0:50, function(j) {
+
+NOTE: The `coef <- 0` line now has the comment `# see jia 2021` which was
+  already present in the original but got shifted during the diff.
+
+ADDED: @return tag to roxygen documentation.
+
+================================================================================
+FILE: R/interpolation.R
+FUNCTION: interpolation()
+================================================================================
+
+REMOVED: Commented-out alternatives for cutoff handling.
+  Old: L_inv_v[i] <- -1; #change to smallest possible value of knots (knot[1])?
+       #L_inv_v[i] <- knot[1]
+  New: L_inv_v[i] <- -1;
+
+ADDED: @return tag to roxygen documentation.
+
+================================================================================
+FILE: R/check_pd.R
+FUNCTION: check_pd()
+================================================================================
+
+REMOVED: Dead code after return statement (lines 31-37).
+  Old code had a commented-out while loop after the return:
+    # while (any(abs(solve(Gamma_hat)) > 5)) { ... }
+
+ADDED: @importFrom matrixcalc is.positive.definite
+ADDED: @importFrom Matrix nearPD
+ADDED: @return tag to roxygen documentation.
+
+================================================================================
+FILE: R/nat_spline.R
+FUNCTION: nat_spline()
+================================================================================
+
+ADDED: @return tag to roxygen documentation.
+No code changes.
+
+================================================================================
+FILE: R/check_marginals.R
+FUNCTION: check_marginals()
+================================================================================
+
+ADDED: @return tag to roxygen documentation.
+No code changes.
+
+================================================================================
+FILE: R/companion_form_phi.R
+FUNCTION: companion_form_phi()
+================================================================================
+
+ADDED: Full roxygen block (@param, @return, @keywords internal).
+REFORMATTED: Minor whitespace/style cleanup (= to <-, spacing).
+No logic changes.
+
+================================================================================
+FILE: R/matrixcalc.R
+FUNCTIONS: vec, vech, vecp, vecd, revVec, revVech, revVecp, make_e_basis,
+           make_u_basis, make_v_basis, comMat, nMat, eliMat, dupMat,
+           makeCommutationMat (15 functions)
+================================================================================
+
+ADDED: Roxygen blocks (@param, @return, @keywords internal) for all 15 functions.
+CHANGED: Error messages from "MIIVsem: ..." to "timecop: ..." (3 occurrences in
+         revVec, revVech, revVecp).
+REMOVED: Plain-comment documentation blocks (DEF'N from Magnus & Neudecker
+         references) — replaced by roxygen documentation.
+No logic changes.
+
+================================================================================
+FILE: R/nb_est.R
+FUNCTION: nb_est()
+================================================================================
+
+ADDED: Full roxygen block (@param, @return, @keywords internal).
+ADDED: TODO comment for future integration.
+ADDED: return(list(r = r, p = p)) — function previously had no return statement.
+
+================================================================================
+FILE: R/marginals.R
+(stub file, no functions)
+================================================================================
+
+Old content: Section header comment only.
+New content: Plain TODO comment (non-roxygen to avoid @name warning).
+
+================================================================================
+FILE: R/latent_var_invLink_numderiv.R
+(stub file, no functions)
+================================================================================
+
+Old content: Empty file (0 bytes).
+New content: Plain TODO comment (non-roxygen to avoid @name warning).
+
+================================================================================
+NEW FILE: R/timecop-package.R
+================================================================================
+
+Package-level documentation with "_PACKAGE" sentinel.
+Import directives: @import methods, stats, utils, polynom.
+utils::globalVariables("Polys") to suppress R CMD check NOTE about sysdata.rda.
+
+================================================================================
+NEW FILE: R/data.R
+================================================================================
+
+Roxygen documentation for the bundled timecop_example dataset.
+
+================================================================================
+NEW FILE: R/check_pd.R (already existed, but was untracked)
+================================================================================
+
+Extracted PD checking logic from the old timecop() constructor into its own
+function. Checks the full Toeplitz matrix (both gamma_hat and Gamma_hat jointly)
+rather than just Gamma_hat alone.
+
+================================================================================
+NAMESPACE CHANGES (auto-generated by roxygen2)
+================================================================================
+
+REMOVED broad imports:
+  - import(matrixcalc)  -> importFrom(matrixcalc, is.positive.definite)
+  - import(mvtnorm)     -> importFrom(mvtnorm, rmvnorm)
+  - import(numDeriv)    -> importFrom(numDeriv, jacobian)
+  - import(cointReg)    -> importFrom(cointReg, getLongRunVar)
+  - import(Matrix)      -> importFrom(Matrix, bdiag) + importFrom(Matrix, nearPD)
+
+  The import(matrixcalc) caused namespace conflicts with local vec()/vech().
+  The import(Matrix) caused conflicts with stats::cov2cor, stats::toeplitz,
+  utils::head, utils::tail.
+
+KEPT broad imports: import(methods), import(stats), import(utils), import(polynom).
+  polynom must remain a full import for S3 method dispatch on Polys objects.
+
+ADDED: exportClasses(timecop) — already present but now generated by roxygen2.

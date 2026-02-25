@@ -2,23 +2,53 @@
 % Please edit documentation in R/latent_var_sim.R
 \name{latent_var_sim}
 \alias{latent_var_sim}
-\title{Simulate multivariate time series}
+\title{Simulate multivariate time series from a latent Gaussian VAR}
 \usage{
 latent_var_sim(d, n, p, param, phi_lv, family)
 }
 \arguments{
-\item{d}{Numeric. The number of variables}
+\item{d}{Numeric. The number of variables.}
 
-\item{n}{Numeric. Time series length}
+\item{n}{Numeric. Time series length.}
 
-\item{p}{Numeric. The VAR order}
+\item{p}{Numeric. The VAR order. Currently only p=1 is supported.}
 
-\item{param}{List. A list of marginal parameters}
+\item{param}{List. A list of length d containing marginal parameters. For
+Bernoulli, the success probability; for Poisson, the rate parameter.}
 
-\item{phi_lv}{Matrix. A d by d transition matrix}
+\item{phi_lv}{Matrix. A d by d transition matrix for the latent VAR process.}
 
-\item{family}{List. A list of marginal distributions}
+\item{family}{List. A list of length d with marginal distribution names.
+Supported: \code{"Bernoulli"}, \code{"Poisson"}, \code{"Gaussian"}.}
+}
+\value{
+A list with components:
+\item{X_t}{d x n matrix of observed (discrete) time series.}
+\item{Z_t}{d x n matrix of latent Gaussian time series.}
+\item{A_true}{d x d x p array of true (scaled) VAR coefficient matrices.}
+\item{Sigma_true}{d x d innovation covariance matrix.}
+\item{beta_true}{Vectorized VAR coefficients.}
+\item{Y_vec}{Vectorized response for observed data.}
+\item{Z_bmat}{Block diagonal design matrix for observed data.}
+\item{Y_mat}{Response matrix for observed data.}
+\item{X_mat}{Predictor matrix for observed data.}
+\item{Y_vec_test}{Vectorized response for latent data.}
+\item{Z_bmat_test}{Block diagonal design matrix for latent data.}
+\item{Y_mat_test}{Response matrix for latent data.}
+\item{X_mat_test}{Predictor matrix for latent data.}
+\item{param}{Input marginal parameters.}
 }
 \description{
-Simulate multivariate time series
+Generates a multivariate discrete-valued time series from a latent Gaussian
+VAR process. The latent Gaussian series is transformed to discrete marginals
+(Bernoulli, Poisson, or Gaussian) via the probability integral transform.
+}
+\examples{
+sim <- latent_var_sim(
+  d = 2, n = 100, p = 1,
+  param = list(0.5, 0.3),
+  phi_lv = matrix(c(0.3, 0.1, 0.1, 0.3), 2, 2),
+  family = list("Bernoulli", "Bernoulli")
+)
+dim(sim$X_t)  # 2 x 100
 }

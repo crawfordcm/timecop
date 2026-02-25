@@ -11,6 +11,9 @@ check_marginals(family, d)
 
 \item{d}{Numeric. The number of variables}
 }
+\value{
+\code{TRUE} invisibly if all checks pass; otherwise an error is thrown.
+}
 \description{
 Check that user-specified marginal distributions are supported
 }

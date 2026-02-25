@@ -11,6 +11,10 @@ nat_spline(coef, u)
 
 \item{u}{Numeric. A vector of grid values}
 }
+\value{
+A list with three components: spline coefficients matrix, second
+derivatives vector, and interval widths vector.
+}
 \description{
 Compute splines
 }

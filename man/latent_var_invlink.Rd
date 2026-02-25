@@ -15,6 +15,10 @@ latent_var_invlink(cov_x_hat, d, p, ell_ij_hat)
 
 \item{ell_ij_hat}{Array. An array of link function coefficients}
 }
+\value{
+An array of latent Gaussian covariance matrices with the same
+dimensions as \code{cov_x_hat}.
+}
 \description{
 Compute latent Gaussian covariances
 }

@@ -1,15 +1,43 @@
 Package: timecop
-Title: Estimation of Latent Gaussian Discrete-Valued Multivariate Time Series
-Version: 0.0.0.9000
-Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+Title: Estimation of Latent Gaussian VAR Models for Discrete-Valued Time Series
+Version: 0.1.0
+Authors@R:c(
+    person("Christopher", "Crawford", , "cmcrawford4792@gmail.com", role = c("aut", "cre")),
+    person("Zachary","Fisher", email = "fish.zachary@gmail.com", role = c("ctb")),
+    person("Younghoon", "Kim", role = "ctb"),
+    person("Vladas", "Pipiras", role = "ctb"),
+    person("Duker", "Marie", role = "ctb")
+    )
+Description: Estimates latent Gaussian vector autoregressive (VAR) models for
+    discrete-valued multivariate time series. Supports Bernoulli, Poisson, and
+    Gaussian marginal distributions through a latent variable approach using
+    Hermite polynomial expansion. Estimation is performed via a method-of-moments
+    Yule-Walker procedure with standard errors derived from the long-run variance
+    of the estimating equations. Currently supports VAR order p=1.
+License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 URL: https://github.com/crawfordcm/timecop
 BugReports: https://github.com/crawfordcm/timecop/issues
-Depends: 
+Depends:
     R (>= 3.5)
+Imports:
+    cointReg,
+    expm,
+    Matrix,
+    matrixcalc,
+    methods,
+    mvtnorm,
+    numDeriv,
+    polynom,
+    stats,
+    utils
+Suggests:
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown
+Config/testthat/edition: 3
+VignetteBuilder: knitr
+LazyData: true
+Maintainer: Christopher Crawford <cmcrawford4792@gmail.com>

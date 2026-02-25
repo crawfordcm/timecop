@@ -1,14 +1,36 @@
-#------------------------------------------------------------------------------#
-# matrix calc operators
-#------------------------------------------------------------------------------#
-# vec-type operators ====
-vec   <- function(x) t(t(as.vector(x))) # column vectorize matrix
-vech  <- function(x) t(t(x[!upper.tri(x)]))
-vecp  <- function(x) t(t(x[!upper.tri(x, diag = TRUE)]))
-vecd  <- function(x) t(t(diag(x)))
+#' Column vectorize a matrix
+#' @param x A matrix.
+#' @return A column vector.
+#' @keywords internal
+vec <- function(x) t(t(as.vector(x)))
 
-# (reverse) vec-type operators ====
+#' Half-vectorize a symmetric matrix
+#' @param x A symmetric matrix.
+#' @return A column vector of lower triangular elements including diagonal.
+#' @keywords internal
+vech <- function(x) t(t(x[!upper.tri(x)]))
 
+#' Strict lower triangular vectorization
+#' @param x A square matrix.
+#' @return A column vector of strictly lower triangular elements.
+#' @keywords internal
+vecp <- function(x) t(t(x[!upper.tri(x, diag = TRUE)]))
+
+#' Diagonal vectorization
+#' @param x A square matrix.
+#' @return A column vector of diagonal elements.
+#' @keywords internal
+vecd <- function(x) t(t(diag(x)))
+
+#' Reverse vec operator
+#'
+#' Reshapes a vector back into a matrix (column-major).
+#'
+#' @param x A numeric vector.
+#' @param ncol Integer. Number of columns (optional for square matrices).
+#' @param nrow Integer. Number of rows (optional for square matrices).
+#' @return A matrix.
+#' @keywords internal
 revVec <- function(x, ncol, nrow){
 
   if (length(x)==1)  { return(x) }
@@ -18,7 +40,7 @@ revVec <- function(x, ncol, nrow){
   if (missing(ncol) | missing(nrow)){
     ncol <- nrow <- d
     if (round(d) != d){
-      stop("MIIVsem: Dimensions needed for non-square matrices.")
+      stop("timecop: Dimensions needed for non-square matrices.")
     }
   }
 
@@ -30,6 +52,10 @@ revVec <- function(x, ncol, nrow){
   return(revvecx)
 }
 
+#' Reverse vech operator
+#' @param x A numeric vector.
+#' @return A symmetric matrix.
+#' @keywords internal
 revVech <- function(x){
 
   if (length(x)==1) { return(x) }
@@ -37,7 +63,7 @@ revVech <- function(x){
   d <- (-1 + sqrt(8*length(x) + 1))/2
 
   if (round(d) != d){
-    stop("MIIVsem: Matrix is not square.")
+    stop("timecop: Matrix is not square.")
   }
 
   revvechx <- matrix(0, nrow=d, ncol=d)
@@ -51,12 +77,16 @@ revVech <- function(x){
   return(revvechx)
 }
 
+#' Reverse vecp operator
+#' @param x A numeric vector.
+#' @return A symmetric matrix with unit diagonal.
+#' @keywords internal
 revVecp <- function(x){
 
   d <- (1 + sqrt(8*length(x) + 1))/2
 
   if (round(d) != d){
-    stop("MIIVsem: Matrix is not square.")
+    stop("timecop: Matrix is not square.")
   }
   revvecp <- matrix(0, nrow=d, ncol=d)
   revvecp[lower.tri(revvecp , diag=FALSE)] <- x
@@ -66,44 +96,49 @@ revVecp <- function(x){
   return(revvecp)
 }
 
-# basis functions ====
-
-# DEF'N from Magnus & Neudecker (1980, p. 423): The unit
-#   vector e_i, i,...,n, is the ith column of the identity
-#   matrix I_n, or a vector length n with one in its
-#   ith position and zeros elsewhere.
-
+#' Create unit basis vector e_i
+#' @param i Integer. Position of the 1.
+#' @param n Integer. Length of the vector.
+#' @return A numeric vector of length n with 1 in position i.
+#' @keywords internal
 make_e_basis <- function(i, n) {
 
   replace(numeric(n), i, 1)
 
 }
 
-# DEF'N from Magnus & Neudecker (1980, p. 423): The unit
-#   vector of length [1/2 * n * (n + 1)] where there is
-#   a one in the [(j-1) * n + i - .5*j*(j+1)] position
-#   and zeros elsewhere 1 <= j <= i <= n.
-
+#' Create symmetric unit basis vector
+#' @param i Integer. Row index.
+#' @param j Integer. Column index.
+#' @param n Integer. Matrix dimension.
+#' @return A numeric unit vector of length n(n+1)/2.
+#' @keywords internal
 make_u_basis <- function(i,j,n) {
 
   replace(numeric(.5*n*(n+1)), (j-1)*n + i - .5*j*(j-1), 1)
 
 }
 
-# DEF'N from Neudecker (1983, p. 274): The unit
-#   vector of length [1/2 * n * (n - 1)] where there is
-#   a one in the [(j-1) * n + i - .5*j*(j+1)] position
-#   and zeros elsewhere 1 <= j < i <= n.
-
+#' Create strictly lower triangular unit basis vector
+#' @param i Integer. Row index.
+#' @param j Integer. Column index.
+#' @param n Integer. Matrix dimension.
+#' @return A numeric unit vector of length n(n-1)/2.
+#' @keywords internal
 make_v_basis <- function(i,j,n) {
 
   replace(numeric(.5*n*(n-1)), (j-1)*n + i - .5*j*(j+1), 1)
 
 }
 
-# commutation matrix ====
-
-#  DEF'N from Magnus & Neudecker (1979, p. 383, 3.1a)
+#' Commutation matrix
+#'
+#' Constructs the mn x mn commutation matrix.
+#'
+#' @param m Integer. First dimension.
+#' @param n Integer. Second dimension (defaults to m).
+#' @return An mn x mn commutation matrix.
+#' @keywords internal
 comMat <- function(m, n=m){
   K <- matrix(0, nrow = n*m, ncol = n*m)
   for(i in 1:m){
@@ -115,23 +150,25 @@ comMat <- function(m, n=m){
   return(K)
 }
 
-
-# N Matrix ====
-
+#' Symmetrizer matrix N
+#' @param n Integer. Matrix dimension.
+#' @return An n^2 x n^2 symmetrizer matrix.
+#' @keywords internal
 nMat <- function(n){
   return(.5 * (diag(n^2) + comMat(n)))
 }
 
-# L Matrix ====
-
+#' Elimination matrix
+#'
+#' @param n Integer. Matrix dimension.
+#' @param type Character. Type of elimination: `"s"` (symmetric), `"l"`
+#'   (strictly lower triangular), or `"d"` (diagonal).
+#' @return An elimination matrix.
+#' @keywords internal
 eliMat <- function(n, type = "s"){
 
 
   if (type == "s"){
-
-    # case = "symmetric" (M vecA = vechA)
-    #  DEF'N from Magnus & Neudecker (1980, p. 425, 3.1b)
-    #  L in Magnus & Neudecker (1980)
 
     M <- matrix(0, nrow= .5*n*(n+1), ncol = n^2)
 
@@ -147,10 +184,6 @@ eliMat <- function(n, type = "s"){
 
   } else if (type == "l"){
 
-    # case = "strictly lower-triangular" (M vecA = vecpA)
-    #  DEF'N from Neudecker (1983, p. 276, 3.1b)
-    #  + L* in Neudecker (1983)
-
     M <- matrix(0, nrow= .5*n*(n-1), ncol = n^2)
 
     for(i in 1:n){
@@ -165,9 +198,6 @@ eliMat <- function(n, type = "s"){
 
   } else if (type == "d"){
 
-    # case = "diagonal" (M vecA = vecdA)
-    #  DEF'N from Neudecker (1983, p. 279, 3.3a)
-    #   + L** in Neudecker (1983)
     M <- matrix(0, nrow = n, ncol = n^2)
 
     for(i in 1:n){
@@ -186,16 +216,16 @@ eliMat <- function(n, type = "s"){
 
 }
 
-# duplication matrix ====
-
-# DEF'N from Magnus & Neudecker (1980, p. 428, 3.2b)
+#' Duplication matrix
+#'
+#' @param n Integer. Matrix dimension.
+#' @param type Character. Type of duplication: `"s"` (symmetric), `"l"`
+#'   (strictly lower triangular), or `"d"` (diagonal).
+#' @return A duplication matrix.
+#' @keywords internal
 dupMat <- function(n, type = "s"){
 
   if (type == "s"){
-
-    # case = "symmetric" (D vechA = vecA)
-    #   DEF'N from Magnus & Neudecker (1980, p. 428, 3.2b)
-    #
 
     Dt <- matrix(0, nrow = .5*n*(n+1), ncol= n^2)
 
@@ -210,7 +240,6 @@ dupMat <- function(n, type = "s"){
 
     return(t(Dt))
 
-    # Neudecker (1983) Definition 3.2.a p. 278
   } else if (type == "l"){
 
     Dt <- matrix(0, nrow = .5*n*(n-1), ncol= n^2)
@@ -228,7 +257,6 @@ dupMat <- function(n, type = "s"){
 
     return(t(Dt))
 
-    # Neudecker (1983) Definition 3.3.b Lemma 3.7 p. 280
   } else if( type == "d"){
 
     Dt <- eliMat(n, type = "d")
@@ -239,11 +267,13 @@ dupMat <- function(n, type = "s"){
 
 }
 
-
-
+#' Commutation matrix (transposed)
+#'
+#' @param n Integer. First dimension.
+#' @param m Integer. Second dimension (defaults to n).
+#' @return A transposed commutation matrix.
+#' @keywords internal
 makeCommutationMat <- function(n, m=n){
-
-  #  DEF'N from Magnus & Neudecker (1979, p. 383, 3.1a)
 
   K <- matrix(0, nrow = n*m, ncol = n*m)
 

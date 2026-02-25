@@ -4,15 +4,47 @@
 \alias{timecop}
 \title{Construct an object of class timecop}
 \usage{
-timecop(data = NULL, family = NULL, p = 1)
+timecop(
+  data = NULL,
+  family = NULL,
+  p = 1,
+  corr = FALSE,
+  pd_approx = FALSE,
+  eig.tol = 1e-04
+)
 }
 \arguments{
 \item{data}{Matrix. An n (time points) by d (variables) multivariate time series matrix}
 
-\item{family}{List. A list of length d with the names of each distribution}
+\item{family}{List. A list of length d with the names of each distribution.
+Supported values: \code{"Bernoulli"}, \code{"Poisson"}, \code{"Gaussian"}.}
 
-\item{p}{Numeric. The VAR order. Default is 1}
+\item{p}{Numeric. The VAR order. Default is 1. Only p=1 is currently supported.}
+
+\item{corr}{Logical. Use correlations instead of covariances. Default is \code{FALSE}.}
+
+\item{pd_approx}{Logical. Check if latent covariance matrices are PD and
+apply nearest positive-definite approximation if not. Default is \code{FALSE}.}
+
+\item{eig.tol}{Numeric. Eigenvalue tolerance for the positive-definite
+approximation. Only relevant if \code{pd_approx = TRUE}. Default is \code{1e-4}.}
+}
+\value{
+An S4 object of class \linkS4class{timecop}.
 }
 \description{
-Construct an object of class timecop
+Takes an n (time points) by d (variables) data matrix and a list of marginal
+distribution families, computes observed and latent covariances, and builds
+the Yule-Walker matrices needed for VAR estimation.
+}
+\examples{
+\donttest{
+sim <- latent_var_sim(
+  d = 2, n = 200, p = 1,
+  param = list(0.5, 0.5),
+  phi_lv = matrix(c(0.4, 0.2, 0.2, 0.4), 2, 2),
+  family = list("Bernoulli", "Bernoulli")
+)
+obj <- timecop(data = t(sim$X_t), family = list("Bernoulli", "Bernoulli"))
+}
 }

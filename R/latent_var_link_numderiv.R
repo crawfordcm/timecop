@@ -4,9 +4,11 @@
 #' @param n Numeric. Time series length
 #' @param param_hat List. List of estimated marginal parameters
 #' @param family List. List of marginal distributions
+#' @param corr Logical. Correlations or covariances
+#' @return A k x d x d array of link function coefficients.
 #' @keywords internal
 
-latent_var_link_numderiv <- function(d, n, param_hat, family){
+latent_var_link_numderiv <- function(d, n, param_hat, family, corr){
 
   k <- 100
 
@@ -23,7 +25,7 @@ latent_var_link_numderiv <- function(d, n, param_hat, family){
       if (j >= i) {
         param_list[[2]] <- param_hat[[j]]
         family_list[[2]] <- family[[j]]
-        ell_ij_hat[,i,j] <- link_coefs(param_list, k, family_list)
+        ell_ij_hat[,i,j] <- link_coefs(param_list, k, family_list, corr)
       } else {
         ell_ij_hat[,i,j] <- ell_ij_hat[,j,i]
       }
