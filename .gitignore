@@ -6,3 +6,5 @@
 .quarto
 Rplots.pdf
 inst/doc
+.positai
+tools/regression_reference.rds

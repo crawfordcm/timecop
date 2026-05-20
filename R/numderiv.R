@@ -13,17 +13,7 @@
 
 numderiv <- function(data, cov_x_hat, d, p, n, family, corr) {
 
-  x1 <- numeric()
-  for (i in seq_along(family)) {
-    if (family[[i]] %in% c("Bernoulli", "Poisson")) {
-      x1 <- c(x1,
-              mean(data[i,], na.rm = TRUE))
-    } else if (family[[i]] == "Gaussian") {
-      x1 <- c(x1,
-              mean(data[i,], na.rm = TRUE),
-              var(data[i,],  na.rm = TRUE))
-    }
-  }
+  x1 <- unlist(estimate_marginal_params(data, family, d))
 
   marg_num <- length(x1)
 

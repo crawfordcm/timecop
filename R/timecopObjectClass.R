@@ -149,6 +149,14 @@ timecop <- function(data = NULL,
   }
 
   # ensure that the interpolation didn't compute impossible values
+  n_clamped_gamma <- sum(gamma_hat > 1 | gamma_hat < -1)
+  n_clamped_Gamma <- sum(Gamma_hat > 1 | Gamma_hat < -1)
+  if (n_clamped_gamma + n_clamped_Gamma > 0) {
+    warning(sprintf(
+      "[timecop] %d value(s) were clamped to [-1, 1] during inverse link interpolation (%d in gamma_hat, %d in Gamma_hat). This may indicate a poor link function fit for some variable pairs.",
+      n_clamped_gamma + n_clamped_Gamma, n_clamped_gamma, n_clamped_Gamma
+    ), call. = FALSE)
+  }
   gamma_hat[gamma_hat > 1] <- 1
   gamma_hat[gamma_hat < -1] <- -1
   Gamma_hat[Gamma_hat > 1] <- 1

@@ -7,3 +7,6 @@
 ^Rplots\.pdf$
 ^CLAUDE\.md$
 ^data-raw$
+^\.positai$
+^\.claude$
+^tools$
