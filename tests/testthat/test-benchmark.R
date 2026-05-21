@@ -1,5 +1,6 @@
 # Golden-file regression tests: lock in point estimates and standard errors.
-# Any change to estimation code that shifts values beyond 1e-6 will fail here.
+# Estimates use tolerance 1e-6; SEs use 1e-5 to tolerate cross-platform
+# floating-point variation in the numerical Jacobian computation.
 
 test_that("Bernoulli estimates and SEs are unchanged (timecop_example)", {
   obj <- timecop(data = timecop_example, family = list("Bernoulli", "Bernoulli"))
@@ -15,7 +16,7 @@ test_that("Bernoulli estimates and SEs are unchanged (timecop_example)", {
   )
 
   expect_equal(fit$estimates, expected_est, tolerance = 1e-6)
-  expect_equal(fit$se,        expected_se,  tolerance = 1e-6)
+  expect_equal(fit$se,        expected_se,  tolerance = 1e-5)
 })
 
 test_that("Poisson estimates and SEs are unchanged (seed 42)", {
@@ -39,7 +40,7 @@ test_that("Poisson estimates and SEs are unchanged (seed 42)", {
   )
 
   expect_equal(fit$estimates, expected_est, tolerance = 1e-6)
-  expect_equal(fit$se,        expected_se,  tolerance = 1e-6)
+  expect_equal(fit$se,        expected_se,  tolerance = 1e-5)
 })
 
 test_that("Mixed Bernoulli+Gaussian estimates and SEs are unchanged (seed 7)", {
@@ -63,7 +64,7 @@ test_that("Mixed Bernoulli+Gaussian estimates and SEs are unchanged (seed 7)", {
   )
 
   expect_equal(fit$estimates, expected_est, tolerance = 1e-6)
-  expect_equal(fit$se,        expected_se,  tolerance = 1e-6)
+  expect_equal(fit$se,        expected_se,  tolerance = 1e-5)
 })
 
 test_that("Mixed Bernoulli+Poisson estimates and SEs are unchanged (seed 99)", {
@@ -87,5 +88,5 @@ test_that("Mixed Bernoulli+Poisson estimates and SEs are unchanged (seed 99)", {
   )
 
   expect_equal(fit$estimates, expected_est, tolerance = 1e-6)
-  expect_equal(fit$se,        expected_se,  tolerance = 1e-6)
+  expect_equal(fit$se,        expected_se,  tolerance = 1e-5)
 })

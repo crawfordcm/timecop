@@ -10,3 +10,4 @@
 ^\.positai$
 ^\.claude$
 ^tools$
+^code_changes\.txt$
