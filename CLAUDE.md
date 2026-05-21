@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Rules
 
 - **Always ask the user for confirmation before editing any R files (R/*.R, tests/testthat/*.R).** Describe the planned changes and wait for approval before making edits.
+- **Never add `Co-Authored-By: Claude` to commit messages.**
 
 ## Package Overview
 
