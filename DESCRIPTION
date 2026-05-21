@@ -4,7 +4,7 @@ Version: 0.1.0
 Authors@R:c(
     person("Christopher", "Crawford", , "cmcrawford4792@gmail.com", role = c("aut", "cre")),
     person("Zachary","Fisher", email = "fish.zachary@gmail.com", role = c("ctb")),
-    person("Younghoon", "Kim", role = "ctb"),
+    person("Younghoon", "Kim", role = "aut"),
     person("Vladas", "Pipiras", role = "ctb"),
     person("Duker", "Marie", role = "ctb")
     )
