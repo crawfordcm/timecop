@@ -1,23 +1,50 @@
 #' Simulate multivariate time series from a latent Gaussian VAR
 #'
 #' Generates a multivariate discrete-valued time series from a latent Gaussian
-#' VAR process. The latent Gaussian series is transformed to discrete marginals
+#' VAR process. The latent Gaussian series is transformed to observed marginals
 #' (Bernoulli, Poisson, or Gaussian) via the probability integral transform.
+#'
+#' The latent process is generated as a stationary Gaussian VAR process and then
+#' rescaled so that each latent component has marginal variance one. By default,
+#' the latent innovations are independent. Users may instead supply either an
+#' innovation covariance matrix through \code{sigma_lv} or an innovation
+#' precision matrix through \code{omega_lv}. Supplying \code{omega_lv} is useful
+#' for simulating a latent graphical VAR, where zeros in the precision matrix
+#' encode contemporaneous conditional independencies among the innovations.
 #'
 #' @param d Numeric. The number of variables.
 #' @param n Numeric. Time series length.
-#' @param p Numeric. The VAR order. Currently only p=1 is supported.
-#' @param param List. A list of length d containing marginal parameters. For
-#'   Bernoulli, the success probability; for Poisson, the rate parameter.
-#' @param phi_lv Matrix. A d by d transition matrix for the latent VAR process.
-#' @param family List. A list of length d with marginal distribution names.
-#'   Supported: `"Bernoulli"`, `"Poisson"`, `"Gaussian"`.
+#' @param p Numeric. The VAR order. Currently only \code{p = 1} is supported.
+#' @param param List. A list of length \code{d} containing marginal parameters.
+#'   For Bernoulli variables, the success probability; for Poisson variables,
+#'   the rate parameter. Gaussian variables do not currently use this value.
+#' @param phi_lv Matrix. A \code{d} by \code{d} transition matrix for the latent
+#'   VAR process.
+#' @param family List. A list of length \code{d} with marginal distribution
+#'   names. Supported options are \code{"Bernoulli"}, \code{"Poisson"}, and
+#'   \code{"Gaussian"}.
+#' @param sigma_lv Optional matrix. A \code{d} by \code{d} innovation covariance
+#'   matrix for the latent VAR process. Default is \code{NULL}. Only one of
+#'   \code{sigma_lv} and \code{omega_lv} may be supplied.
+#' @param omega_lv Optional matrix. A \code{d} by \code{d} innovation precision
+#'   matrix for the latent VAR process. Default is \code{NULL}. If supplied,
+#'   the innovation covariance matrix is computed as \code{solve(omega_lv)}.
+#'   Only one of \code{sigma_lv} and \code{omega_lv} may be supplied.
+#'
 #' @return A list with components:
-#'   \item{X_t}{d x n matrix of observed (discrete) time series.}
-#'   \item{Z_t}{d x n matrix of latent Gaussian time series.}
-#'   \item{A_true}{d x d x p array of true (scaled) VAR coefficient matrices.}
-#'   \item{Sigma_true}{d x d innovation covariance matrix.}
-#'   \item{beta_true}{Vectorized VAR coefficients.}
+#'   \item{X_t}{A \code{d} by \code{n} matrix of observed time series.}
+#'   \item{Z_t}{A \code{d} by \code{n} matrix of latent Gaussian time series.}
+#'   \item{A_true}{A \code{d} by \code{d} by \code{p} array of true scaled VAR
+#'     coefficient matrices.}
+#'   \item{Sigma_true}{A \code{d} by \code{d} scaled latent innovation covariance
+#'     matrix used to simulate the latent innovations.}
+#'   \item{Omega_true}{A \code{d} by \code{d} scaled latent innovation precision
+#'     matrix, equal to \code{solve(Sigma_true)} when \code{omega_lv} is supplied;
+#'     otherwise \code{NULL}.}
+#'   \item{beta_true}{Vectorized true VAR coefficients.}
+#'   \item{innovation_type}{Character string indicating how the latent innovation
+#'     covariance was specified: \code{"identity"}, \code{"covariance"}, or
+#'     \code{"precision"}.}
 #'   \item{Y_vec}{Vectorized response for observed data.}
 #'   \item{Z_bmat}{Block diagonal design matrix for observed data.}
 #'   \item{Y_mat}{Response matrix for observed data.}
@@ -27,6 +54,7 @@
 #'   \item{Y_mat_test}{Response matrix for latent data.}
 #'   \item{X_mat_test}{Predictor matrix for latent data.}
 #'   \item{param}{Input marginal parameters.}
+#'
 #' @examples
 #' sim <- latent_var_sim(
 #'   d = 2, n = 100, p = 1,
@@ -35,12 +63,54 @@
 #'   family = list("Bernoulli", "Bernoulli")
 #' )
 #' dim(sim$X_t)  # 2 x 100
+#'
+#' # With user-specified latent innovation covariance
+#' sigma_lv <- matrix(c(1, 0.3, 0.3, 1), 2, 2)
+#' sim_cov <- latent_var_sim(
+#'   d = 2, n = 100, p = 1,
+#'   param = list(0.5, 0.3),
+#'   phi_lv = matrix(c(0.3, 0.1, 0.1, 0.3), 2, 2),
+#'   family = list("Bernoulli", "Bernoulli"),
+#'   sigma_lv = sigma_lv
+#' )
+#'
+#' # With user-specified latent innovation precision matrix
+#' # for a latent graphical VAR
+#' phi_lv <- matrix(
+#'   c(
+#'     0.30,  0.00,  0.10,
+#'     0.20,  0.40,  0.00,
+#'     0.00, -0.15,  0.25
+#'   ),
+#'   nrow = 3,
+#'   byrow = TRUE
+#' )
+#'
+#' omega_lv <- matrix(
+#'   c(
+#'     1.00, -0.30,  0.00,
+#'    -0.30,  1.00,  0.25,
+#'     0.00,  0.25,  1.00
+#'   ),
+#'   nrow = 3,
+#'   byrow = TRUE
+#' )
+#'
+#' sim_gvar <- latent_var_sim(
+#'   d = 3, n = 100, p = 1,
+#'   param = list(0.5, 3, 0.3),
+#'   phi_lv = phi_lv,
+#'   family = list("Bernoulli", "Poisson", "Bernoulli"),
+#'   omega_lv = omega_lv
+#' )
+#'
 #' @importFrom mvtnorm rmvnorm
 #' @importFrom expm %^%
 #' @importFrom Matrix bdiag
 #' @export
 
-latent_var_sim <- function(d, n, p, param, phi_lv, family){
+latent_var_sim <- function(d, n, p, param, phi_lv, family,
+                           sigma_lv = NULL, omega_lv = NULL){
 
   if (!is.numeric(d) || length(d) != 1 || d < 1 || d != as.integer(d)) {
     stop("'d' must be a positive integer", call. = FALSE)
@@ -61,7 +131,53 @@ latent_var_sim <- function(d, n, p, param, phi_lv, family){
     stop("'family' must be a list of length d", call. = FALSE)
   }
 
-  Sigma_star <- diag(1,nrow=d)
+  if (!is.null(sigma_lv) && !is.null(omega_lv)) {
+    stop("Provide only one of 'sigma_lv' or 'omega_lv', not both.", call. = FALSE)
+  }
+
+  if (is.null(sigma_lv) && is.null(omega_lv)) {
+
+    Sigma_star <- diag(1, nrow = d)
+    innovation_type <- "identity"
+
+  } else if (!is.null(sigma_lv)) {
+
+    if (!is.matrix(sigma_lv) || nrow(sigma_lv) != d || ncol(sigma_lv) != d) {
+      stop("'sigma_lv' must be a d x d covariance matrix.", call. = FALSE)
+    }
+
+    if (max(abs(sigma_lv - t(sigma_lv))) > 1e-8) {
+      stop("'sigma_lv' must be symmetric.", call. = FALSE)
+    }
+
+    eig_sigma <- eigen(sigma_lv, symmetric = TRUE, only.values = TRUE)$values
+    if (min(eig_sigma) <= 0) {
+      stop("'sigma_lv' must be positive definite.", call. = FALSE)
+    }
+
+    Sigma_star <- sigma_lv
+    innovation_type <- "covariance"
+
+  } else {
+
+    if (!is.matrix(omega_lv) || nrow(omega_lv) != d || ncol(omega_lv) != d) {
+      stop("'omega_lv' must be a d x d precision matrix.", call. = FALSE)
+    }
+
+    if (max(abs(omega_lv - t(omega_lv))) > 1e-8) {
+      stop("'omega_lv' must be symmetric.", call. = FALSE)
+    }
+
+    eig_omega <- eigen(omega_lv, symmetric = TRUE, only.values = TRUE)$values
+    if (min(eig_omega) <= 0) {
+      stop("'omega_lv' must be positive definite.", call. = FALSE)
+    }
+
+    Sigma_star <- solve(omega_lv)
+    innovation_type <- "precision"
+  }
+
+
   A_star <- array(phi_lv,dim=c(d,d,p))
 
   decay.rate <- 1
@@ -189,10 +305,32 @@ latent_var_sim <- function(d, n, p, param, phi_lv, family){
   mat_cal_Z_test <- bdiag(replicate(d,X_cal_Z,simplify=FALSE))
 
 
-  output <- list( X_t = X_t, Z_t = Z_t, A_true = A, Sigma_true = Sigma, beta_true = beta,
-                  Y_vec_test = vec_bf_Y_test, Z_bmat_test = mat_cal_Z_test,
-                  Y_mat_test = Y_cal_Z, X_mat_test = X_cal_Z, param = param,
-                  Y_vec = vec_bf_Y, Z_bmat = mat_cal_Z,
-                  Y_mat = Y_cal_X, X_mat = X_cal_X)
+  output <- list(
+    X_t = X_t,
+    Z_t = Z_t,
+
+    A_true = A,
+    Sigma_true = Sigma,
+    beta_true = beta,
+
+    Omega_true = if (!is.null(omega_lv)) solve(Sigma) else NULL,
+    innovation_type = innovation_type,
+
+    Y_vec_test = vec_bf_Y_test,
+    Z_bmat_test = mat_cal_Z_test,
+    Y_mat_test = Y_cal_Z,
+    X_mat_test = X_cal_Z,
+
+    param = param,
+
+    Y_vec = vec_bf_Y,
+    Z_bmat = mat_cal_Z,
+    Y_mat = Y_cal_X,
+    X_mat = X_cal_X,
+
+    family = family
+  )
+
   return(output)
+
 }
