@@ -18,10 +18,15 @@ Useful links:
 \author{
 \strong{Maintainer}: Christopher Crawford \email{cmcrawford4792@gmail.com}
 
+Authors:
+\itemize{
+  \item Christopher Crawford \email{cmcrawford4792@gmail.com}
+  \item Younghoon Kim
+}
+
 Other contributors:
 \itemize{
   \item Zachary Fisher \email{fish.zachary@gmail.com} [contributor]
-  \item Younghoon Kim [contributor]
   \item Vladas Pipiras [contributor]
   \item Duker Marie [contributor]
 }

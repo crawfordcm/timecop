@@ -23,7 +23,7 @@ Each matrix has columns: Estimate, Std. Error, z value, Pr(>|z|).}
 \item{corr}{Logical indicating whether correlations were used.}
 }
 \description{
-Produces a summary of the latent Gaussian VAR(1) estimation results,
+Produces a summary of the latent Gaussian VAR estimation results,
 including coefficient estimates, standard errors, z-values, and p-values
 for each equation.
 }

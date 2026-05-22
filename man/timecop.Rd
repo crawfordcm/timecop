@@ -30,7 +30,7 @@ apply nearest positive-definite approximation if not. Default is \code{FALSE}.}
 approximation. Only relevant if \code{pd_approx = TRUE}. Default is \code{1e-4}.}
 }
 \value{
-An S4 object of class \linkS4class{timecop}.
+An S4 object of class \link[=timecop-class]{timecop}.
 }
 \description{
 Takes an n (time points) by d (variables) data matrix and a list of marginal

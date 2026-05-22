@@ -8,7 +8,7 @@
 fit_timecop(object)
 }
 \arguments{
-\item{object}{A \linkS4class{timecop} object built using \code{\link[=timecop]{timecop()}}.}
+\item{object}{A \link[=timecop-class]{timecop} object built using \code{\link[=timecop]{timecop()}}.}
 }
 \value{
 An object of class \code{"timecop_fit"} (a named list) with elements:
@@ -21,7 +21,7 @@ p-values.
 }
 \description{
 Estimates the VAR(1) transition matrix and standard errors from a
-\linkS4class{timecop} object using the Yule-Walker method.
+\link[=timecop-class]{timecop} object using the Yule-Walker method.
 }
 \examples{
 \donttest{

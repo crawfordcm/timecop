@@ -1,7 +1,7 @@
 Package: timecop
 Title: Estimation of Latent Gaussian VAR Models for Discrete-Valued Time Series
 Version: 0.1.0
-Authors@R:c(
+Authors@R: c(
     person("Christopher", "Crawford", , "cmcrawford4792@gmail.com", role = c("aut", "cre")),
     person("Younghoon", "Kim", role = "aut"),
     person("Zachary","Fisher", email = "fish.zachary@gmail.com", role = c("ctb")),
@@ -17,7 +17,6 @@ Description: Estimates latent Gaussian vector autoregressive (VAR) models for
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 URL: https://github.com/crawfordcm/timecop
 BugReports: https://github.com/crawfordcm/timecop/issues
 Depends:
@@ -41,3 +40,4 @@ Config/testthat/edition: 3
 VignetteBuilder: knitr
 LazyData: true
 Maintainer: Christopher Crawford <cmcrawford4792@gmail.com>
+Config/roxygen2/version: 8.0.0

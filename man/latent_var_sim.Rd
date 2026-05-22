@@ -4,30 +4,59 @@
 \alias{latent_var_sim}
 \title{Simulate multivariate time series from a latent Gaussian VAR}
 \usage{
-latent_var_sim(d, n, p, param, phi_lv, family)
+latent_var_sim(
+  d,
+  n,
+  p,
+  param,
+  phi_lv,
+  family,
+  sigma_lv = NULL,
+  omega_lv = NULL
+)
 }
 \arguments{
 \item{d}{Numeric. The number of variables.}
 
 \item{n}{Numeric. Time series length.}
 
-\item{p}{Numeric. The VAR order. Currently only p=1 is supported.}
+\item{p}{Numeric. The VAR order. Currently only \code{p = 1} is supported.}
 
-\item{param}{List. A list of length d containing marginal parameters. For
-Bernoulli, the success probability; for Poisson, the rate parameter.}
+\item{param}{List. A list of length \code{d} containing marginal parameters.
+For Bernoulli variables, the success probability; for Poisson variables,
+the rate parameter. Gaussian variables do not currently use this value.}
 
-\item{phi_lv}{Matrix. A d by d transition matrix for the latent VAR process.}
+\item{phi_lv}{Matrix. A \code{d} by \code{d} transition matrix for the latent
+VAR process.}
 
-\item{family}{List. A list of length d with marginal distribution names.
-Supported: \code{"Bernoulli"}, \code{"Poisson"}, \code{"Gaussian"}.}
+\item{family}{List. A list of length \code{d} with marginal distribution
+names. Supported options are \code{"Bernoulli"}, \code{"Poisson"}, and
+\code{"Gaussian"}.}
+
+\item{sigma_lv}{Optional matrix. A \code{d} by \code{d} innovation covariance
+matrix for the latent VAR process. Default is \code{NULL}. Only one of
+\code{sigma_lv} and \code{omega_lv} may be supplied.}
+
+\item{omega_lv}{Optional matrix. A \code{d} by \code{d} innovation precision
+matrix for the latent VAR process. Default is \code{NULL}. If supplied,
+the innovation covariance matrix is computed as \code{solve(omega_lv)}.
+Only one of \code{sigma_lv} and \code{omega_lv} may be supplied.}
 }
 \value{
 A list with components:
-\item{X_t}{d x n matrix of observed (discrete) time series.}
-\item{Z_t}{d x n matrix of latent Gaussian time series.}
-\item{A_true}{d x d x p array of true (scaled) VAR coefficient matrices.}
-\item{Sigma_true}{d x d innovation covariance matrix.}
-\item{beta_true}{Vectorized VAR coefficients.}
+\item{X_t}{A \code{d} by \code{n} matrix of observed time series.}
+\item{Z_t}{A \code{d} by \code{n} matrix of latent Gaussian time series.}
+\item{A_true}{A \code{d} by \code{d} by \code{p} array of true scaled VAR
+coefficient matrices.}
+\item{Sigma_true}{A \code{d} by \code{d} scaled latent innovation covariance
+matrix used to simulate the latent innovations.}
+\item{Omega_true}{A \code{d} by \code{d} scaled latent innovation precision
+matrix, equal to \code{solve(Sigma_true)} when \code{omega_lv} is supplied;
+otherwise \code{NULL}.}
+\item{beta_true}{Vectorized true VAR coefficients.}
+\item{innovation_type}{Character string indicating how the latent innovation
+covariance was specified: \code{"identity"}, \code{"covariance"}, or
+\code{"precision"}.}
 \item{Y_vec}{Vectorized response for observed data.}
 \item{Z_bmat}{Block diagonal design matrix for observed data.}
 \item{Y_mat}{Response matrix for observed data.}
@@ -40,8 +69,17 @@ A list with components:
 }
 \description{
 Generates a multivariate discrete-valued time series from a latent Gaussian
-VAR process. The latent Gaussian series is transformed to discrete marginals
+VAR process. The latent Gaussian series is transformed to observed marginals
 (Bernoulli, Poisson, or Gaussian) via the probability integral transform.
+}
+\details{
+The latent process is generated as a stationary Gaussian VAR process and then
+rescaled so that each latent component has marginal variance one. By default,
+the latent innovations are independent. Users may instead supply either an
+innovation covariance matrix through \code{sigma_lv} or an innovation
+precision matrix through \code{omega_lv}. Supplying \code{omega_lv} is useful
+for simulating a latent graphical VAR, where zeros in the precision matrix
+encode contemporaneous conditional independencies among the innovations.
 }
 \examples{
 sim <- latent_var_sim(
@@ -51,4 +89,45 @@ sim <- latent_var_sim(
   family = list("Bernoulli", "Bernoulli")
 )
 dim(sim$X_t)  # 2 x 100
+
+# With user-specified latent innovation covariance
+sigma_lv <- matrix(c(1, 0.3, 0.3, 1), 2, 2)
+sim_cov <- latent_var_sim(
+  d = 2, n = 100, p = 1,
+  param = list(0.5, 0.3),
+  phi_lv = matrix(c(0.3, 0.1, 0.1, 0.3), 2, 2),
+  family = list("Bernoulli", "Bernoulli"),
+  sigma_lv = sigma_lv
+)
+
+# With user-specified latent innovation precision matrix
+# for a latent graphical VAR
+phi_lv <- matrix(
+  c(
+    0.30,  0.00,  0.10,
+    0.20,  0.40,  0.00,
+    0.00, -0.15,  0.25
+  ),
+  nrow = 3,
+  byrow = TRUE
+)
+
+omega_lv <- matrix(
+  c(
+    1.00, -0.30,  0.00,
+   -0.30,  1.00,  0.25,
+    0.00,  0.25,  1.00
+  ),
+  nrow = 3,
+  byrow = TRUE
+)
+
+sim_gvar <- latent_var_sim(
+  d = 3, n = 100, p = 1,
+  param = list(0.5, 3, 0.3),
+  phi_lv = phi_lv,
+  family = list("Bernoulli", "Poisson", "Bernoulli"),
+  omega_lv = omega_lv
+)
+
 }
