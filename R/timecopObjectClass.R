@@ -60,8 +60,14 @@ setClass(
 #'   Supported values: `"Bernoulli"`, `"Poisson"`, `"Gaussian"`.
 #' @param p Numeric. The VAR order. Default is 1. Only p=1 is currently supported.
 #' @param corr Logical. Use correlations instead of covariances. Default is `FALSE`.
-#' @param pd_approx Logical. Check if latent covariance matrices are PD and
-#'   apply nearest positive-definite approximation if not. Default is `FALSE`.
+#' @param pd_approx Logical. Check that the joint lag-0/lag-1 latent covariance
+#'   matrix is positive definite and repair it (nearest positive-definite
+#'   approximation) if not. The repair is applied to the stored latent
+#'   covariances themselves, so all downstream estimators (Yule-Walker,
+#'   [fit_graphical_var()], [fit_multitask()]) consume the repaired matrices.
+#'   Recommended for discrete marginals at modest sample sizes, where the
+#'   entrywise inverse link can produce non-PD latent estimates. Default is
+#'   `FALSE`.
 #' @param eig.tol Numeric. Eigenvalue tolerance for the positive-definite
 #'   approximation. Only relevant if `pd_approx = TRUE`. Default is `1e-4`.
 #' @return An S4 object of class [timecop-class].
@@ -127,7 +133,32 @@ timecop <- function(data = NULL,
   ell_ij_hat <- latent_var_link(data, d, n, k, family, corr)
   cov_z_hat  <- latent_var_invlink(cov_x_hat, d, p, ell_ij_hat)
 
-  # construct covariance matrices for Yule-Walker
+  # ensure that the interpolation didn't compute impossible values: clamp the
+  # latent array itself so every consumer (Yule-Walker, graphical VAR,
+  # multitask) sees valid correlations
+  n_clamped <- sum(cov_z_hat > 1 | cov_z_hat < -1)
+  if (n_clamped > 0) {
+    warning(sprintf(
+      "[timecop] %d value(s) were clamped to [-1, 1] during inverse link interpolation. This may indicate a poor link function fit for some variable pairs.",
+      n_clamped
+    ), call. = FALSE)
+  }
+  cov_z_hat[cov_z_hat > 1] <- 1
+  cov_z_hat[cov_z_hat < -1] <- -1
+
+  # check that the joint lag-0/lag-1 latent covariance is PD and repair it in
+  # cov_z_hat itself (only works for p = 1 currently). Joint positive
+  # definiteness guarantees a PSD innovation covariance S_eps(B) for EVERY
+  # transition matrix B, since S_eps(B) = [I, -B] J [I, -B]'.
+  if (pd_approx) {
+    cov_mats <- check_pd(cov_z_hat[,, p], cov_z_hat[,, p + 1L], d,
+                         eig.tol = eig.tol)
+    cov_z_hat[,, p]      <- cov_mats$S10   # lag-1 block
+    cov_z_hat[,, p + 1L] <- cov_mats$S0    # lag-0 block
+  }
+
+  # construct covariance matrices for Yule-Walker from the (clamped, possibly
+  # repaired) latent covariances
   # stacked covariances
   gamma_hat <- array(NA,dim=c(p*d,d))
   for (h in 1:p) {
@@ -146,27 +177,6 @@ timecop <- function(data = NULL,
         Gamma_hat[((i-1)*d+1):(i*d),((j-1)*d+1):(j*d)] <- cov_z_hat[,,(p+1-abs(i-j))]
       }
     }
-  }
-
-  # ensure that the interpolation didn't compute impossible values
-  n_clamped_gamma <- sum(gamma_hat > 1 | gamma_hat < -1)
-  n_clamped_Gamma <- sum(Gamma_hat > 1 | Gamma_hat < -1)
-  if (n_clamped_gamma + n_clamped_Gamma > 0) {
-    warning(sprintf(
-      "[timecop] %d value(s) were clamped to [-1, 1] during inverse link interpolation (%d in gamma_hat, %d in Gamma_hat). This may indicate a poor link function fit for some variable pairs.",
-      n_clamped_gamma + n_clamped_Gamma, n_clamped_gamma, n_clamped_Gamma
-    ), call. = FALSE)
-  }
-  gamma_hat[gamma_hat > 1] <- 1
-  gamma_hat[gamma_hat < -1] <- -1
-  Gamma_hat[Gamma_hat > 1] <- 1
-  Gamma_hat[Gamma_hat < -1] <- -1
-
-  # check if covariances matrices are PD (only works for p = 1 currently)
-  if (pd_approx) {
-    cov_mats  <- check_pd(gamma_hat, Gamma_hat, d, eig.tol)
-    gamma_hat <- cov_mats[[1]]
-    Gamma_hat <- cov_mats[[2]]
   }
 
   obj <- new(
@@ -252,3 +262,116 @@ setMethod(f = "fit_timecop", signature = "timecop", definition = function(object
   return(results)
 
 })
+
+# check timecop_multitask object
+check_timecop_multitask <- function(object) {
+
+  errors <- character()
+
+  if (length(object@subjects) == 0) {
+    errors <- c(errors, "timecop_multitask error: must contain at least one subject")
+  }
+
+  if (!all(vapply(object@subjects, is, logical(1), class2 = "timecop"))) {
+    errors <- c(errors, "timecop_multitask error: every subject must be a 'timecop' object")
+  }
+
+  ds <- vapply(object@subjects, function(s) s@d, numeric(1))
+  if (length(unique(ds)) > 1) {
+    errors <- c(errors, "timecop_multitask error: all subjects must have the same number of variables d")
+  }
+
+  ps <- vapply(object@subjects, function(s) s@p, numeric(1))
+  if (length(unique(ps)) > 1) {
+    errors <- c(errors, "timecop_multitask error: all subjects must have the same VAR order p")
+  }
+
+  if (length(errors) == 0) TRUE else errors
+}
+
+#' timecop_multitask object class
+#'
+#' A multi-subject (multitask) container holding one [timecop-class] object per
+#' subject, for use with fit_multitask.
+#'
+#' @slot subjects List. A list of K [timecop-class] objects, one per subject.
+#' @slot K Numeric. The number of subjects.
+#' @slot d Numeric. The number of variables (shared across subjects).
+#' @slot p Numeric. The VAR order. Default is 1.
+#' @slot N Numeric. A length-K vector of usable observation counts (n_k - p).
+#' @slot family List. The shared list of marginal distributions.
+#' @export
+
+
+setClass(
+  Class = "timecop_multitask",
+  slots = list(
+    subjects = "list",
+    K        = "numeric",
+    d        = "numeric",
+    p        = "numeric",
+    N        = "numeric",
+    family   = "list"
+  ), validity = check_timecop_multitask
+)
+
+#' Construct a multi-subject (multitask) timecop object
+#'
+#' Takes a list of n_k (time points) by d (variables) data matrices, one per
+#' subject, and a shared list of marginal distribution families. Each subject is
+#' passed through [timecop()] to compute its latent covariances; the resulting
+#' objects are bundled for common-plus-individual VAR estimation with
+#' [fit_multitask()].
+#'
+#' @param data List. A list of K matrices, each n_k (time points) by d
+#'   (variables). Every subject must have the same number of variables d.
+#' @param family List. A list of length d of marginal distribution names,
+#'   applied to every subject. Supported values: `"Bernoulli"`, `"Poisson"`,
+#'   `"Gaussian"`.
+#' @param p Numeric. The VAR order. Default is 1. Only p=1 is currently supported.
+#' @param corr Logical. Use correlations instead of covariances. Default `FALSE`.
+#' @param pd_approx Logical. Apply nearest positive-definite approximation to
+#'   each subject's latent covariances if needed. Default `FALSE`.
+#' @param eig.tol Numeric. Eigenvalue tolerance for the positive-definite
+#'   approximation. Only relevant if `pd_approx = TRUE`. Default `1e-4`.
+#' @return An S4 object of class [timecop_multitask-class].
+#' @export
+timecop_multitask <- function(data = NULL,
+                              family = NULL,
+                              p = 1,
+                              corr = FALSE,
+                              pd_approx = FALSE,
+                              eig.tol = 1e-4) {
+
+  if (!is.list(data) || length(data) == 0) {
+    stop("'data' must be a non-empty list of n x d matrices (one per subject)",
+         call. = FALSE)
+  }
+
+  # Each subject is validated and processed by the single-subject constructor.
+  subjects <- lapply(seq_along(data), function(k) {
+    tryCatch(
+      timecop(data = data[[k]], family = family, p = p,
+              corr = corr, pd_approx = pd_approx, eig.tol = eig.tol),
+      error = function(e) {
+        stop(sprintf("subject %d: %s", k, conditionMessage(e)), call. = FALSE)
+      }
+    )
+  })
+
+  d <- subjects[[1]]@d
+  N <- vapply(subjects, function(s) s@n - s@p, numeric(1))
+
+  obj <- new(
+    "timecop_multitask",
+    subjects = subjects,
+    K        = length(subjects),
+    d        = d,
+    p        = p,
+    N        = N,
+    family   = family
+  )
+
+  return(obj)
+
+}

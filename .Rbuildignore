@@ -11,3 +11,8 @@
 ^\.claude$
 ^tools$
 ^code_changes\.txt$
+^CODE_REVIEW\.md$
+^IMPROVEMENT_PLAN\.md$
+^multitask_code_review\.md$
+^multitask_precision_grid_diagnosis\.md$
+^multitask_graphical_var_math\.md$

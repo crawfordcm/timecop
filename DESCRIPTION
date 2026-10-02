@@ -24,8 +24,8 @@ Depends:
 Imports:
     cointReg,
     expm,
+    glasso,
     Matrix,
-    matrixcalc,
     methods,
     mvtnorm,
     numDeriv,
@@ -41,3 +41,43 @@ VignetteBuilder: knitr
 LazyData: true
 Maintainer: Christopher Crawford <cmcrawford4792@gmail.com>
 Config/roxygen2/version: 8.0.0
+Collate: 
+    'check_marginals.R'
+    'check_pd.R'
+    'companion_form_phi.R'
+    'data.R'
+    'estimate_marginal_params.R'
+    'timecopObjectClass.R'
+    'fit_graphical_var.R'
+    'fit_multitask.R'
+    'fit_var.R'
+    'gvar_ebic.R'
+    'gvar_objective.R'
+    'gvar_precision_update.R'
+    'gvar_resid_cov.R'
+    'gvar_temporal_fista.R'
+    'gvar_weights_A.R'
+    'gvar_weights_Omega.R'
+    'hermite_coefs.R'
+    'interpolation.R'
+    'latent_var_invlink.R'
+    'latent_var_link.R'
+    'latent_var_sim.R'
+    'link_coefs.R'
+    'longrun_var.R'
+    'matrixcalc.R'
+    'multitask_adaptive_weights.R'
+    'multitask_ebic.R'
+    'multitask_glasso_admm.R'
+    'multitask_gvar_alternate.R'
+    'multitask_gvar_ebic.R'
+    'multitask_lambda_grids.R'
+    'multitask_pgd.R'
+    'nat_spline.R'
+    'nb_est.R'
+    'numderiv.R'
+    'observed_var_cov.R'
+    'se_var.R'
+    'setup_data.R'
+    'summary.R'
+    'timecop-package.R'

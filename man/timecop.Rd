@@ -23,8 +23,14 @@ Supported values: \code{"Bernoulli"}, \code{"Poisson"}, \code{"Gaussian"}.}
 
 \item{corr}{Logical. Use correlations instead of covariances. Default is \code{FALSE}.}
 
-\item{pd_approx}{Logical. Check if latent covariance matrices are PD and
-apply nearest positive-definite approximation if not. Default is \code{FALSE}.}
+\item{pd_approx}{Logical. Check that the joint lag-0/lag-1 latent covariance
+matrix is positive definite and repair it (nearest positive-definite
+approximation) if not. The repair is applied to the stored latent
+covariances themselves, so all downstream estimators (Yule-Walker,
+\code{\link[=fit_graphical_var]{fit_graphical_var()}}, \code{\link[=fit_multitask]{fit_multitask()}}) consume the repaired matrices.
+Recommended for discrete marginals at modest sample sizes, where the
+entrywise inverse link can produce non-PD latent estimates. Default is
+\code{FALSE}.}
 
 \item{eig.tol}{Numeric. Eigenvalue tolerance for the positive-definite
 approximation. Only relevant if \code{pd_approx = TRUE}. Default is \code{1e-4}.}
