@@ -4,7 +4,7 @@
 \alias{numderiv}
 \title{Compute numerical derivatives}
 \usage{
-numderiv(data, cov_x_hat, d, p, n, family, corr)
+numderiv(data, cov_x_hat, d, p, n, family, ordinal_levels, corr)
 }
 \arguments{
 \item{data}{Matrix. A d by n multivariate time series matrix}
@@ -18,6 +18,9 @@ numderiv(data, cov_x_hat, d, p, n, family, corr)
 \item{n}{Numeric. Time series length}
 
 \item{family}{List. A list of marginal distributions}
+
+\item{ordinal_levels}{List. A list of length d containing the numeric levels
+for each Ordinal variable and \code{NULL} for each non-Ordinal variable.}
 
 \item{corr}{Logical. Correlations or covariances}
 }

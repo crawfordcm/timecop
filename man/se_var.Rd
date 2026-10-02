@@ -4,7 +4,19 @@
 \alias{se_var}
 \title{Compute standard errors}
 \usage{
-se_var(data, gamma_hat, Gamma_hat, cov_x_hat, d, p, n, family, marg_num, corr)
+se_var(
+  data,
+  gamma_hat,
+  Gamma_hat,
+  cov_x_hat,
+  d,
+  p,
+  n,
+  family,
+  ordinal_levels,
+  marg_num,
+  corr
+)
 }
 \arguments{
 \item{data}{Matrix. A d by n multivariate time series matrix}
@@ -22,6 +34,9 @@ se_var(data, gamma_hat, Gamma_hat, cov_x_hat, d, p, n, family, marg_num, corr)
 \item{n}{Numeric. Time series length}
 
 \item{family}{List. A list of marginal distributions}
+
+\item{ordinal_levels}{List. A list of length d containing the numeric levels
+for each Ordinal variable and \code{NULL} for each non-Ordinal variable.}
 
 \item{marg_num}{Numeric. The total number of marginal parameters}
 
