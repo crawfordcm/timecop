@@ -3,13 +3,15 @@
 #' @param param Numeric. Estimate of marginal parameter
 #' @param k Numeric. The value at which Hermite coefficient infinite sums terminate. Default is 100
 #' @param family Character. Name of marginal distribution
+#' @param ordinal_levels Numeric. A vector of levels for Ordinal family and NULL otherwise
 #' @return A numeric vector of k Hermite coefficients.
 #' @keywords internal
 
-hermite_coefs <- function(param, k, family){
-  prob <- param
+hermite_coefs <- function(param, k, family, ordinal_levels) {
 
-  if (family == "Bernoulli"){
+  if (family == "Bernoulli") {
+
+    prob <- param
     q <- qnorm(1-prob)
 
     hk <- lapply(seq_len(k), function(i) {
@@ -21,10 +23,12 @@ hermite_coefs <- function(param, k, family){
       exp(-q^2/2) * hk[[i]] / (sqrt(2*pi)*factorial(i))
     }))
 
-  } else if (family == "Poisson"){
+  } else if (family == "Poisson") {
+
     lambda <- param
 
     g <- unlist(lapply(seq_len(k), function(i) {do.call("sum", lapply(0:50, function(j) {
+
       # get Q
       c <- ppois(j, lambda)
       q <- qnorm(c)
@@ -42,18 +46,23 @@ hermite_coefs <- function(param, k, family){
     }))}))
 
   } else if (family == "Ordinal"){
-    if (length(prob) != 3) {
-      stop("For Ordinal family, param must be c(p0, p1, p2).", call. = FALSE)
+
+    probs <- param
+
+    if (length(probs) != length(ordinal_levels)) {
+      stop(
+        paste0(
+          "Hermite coefficient calculation error: the number of probabilities ",
+          "does not match the number of ordinal levels."
+        ),
+        call. = FALSE
+      )
     }
 
-    if (any(prob < 0) || abs(sum(prob) - 1) > 1e-8) {
-      stop("For Ordinal family, probabilities must be nonnegative and sum to 1.", call. = FALSE)
-    }
+    n_levels <- length(probs)
 
-    q <- c(
-      qnorm(prob[1]),
-      qnorm(prob[1] + prob[2])
-    )
+    # need number of levels - 1 here
+    q <- qnorm(cumsum(probs)[seq_len(n_levels - 1L)])
 
     g <- unlist(lapply(seq_len(k), function(i) {
 
@@ -67,14 +76,15 @@ hermite_coefs <- function(param, k, family){
 
         hk <- her(q0)
 
-        exp(-q0^2 / 2) * hk / (sqrt(2 * pi) * factorial(i))
+        exp(-q0^2/2) * hk/(sqrt(2*pi)*factorial(i))
       }))
 
       return(coef)
-    }))
-    
 
-  } else if (family == "Gaussian"){
+    }))
+
+
+  } else if (family == "Gaussian") {
     g <- numeric(k)
     g[1] <- 1
   }

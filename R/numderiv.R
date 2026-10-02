@@ -6,14 +6,16 @@
 #' @param p Numeric. The VAR order
 #' @param n Numeric. Time series length
 #' @param family List. A list of marginal distributions
+#' @param ordinal_levels List. A list of length d containing the numeric levels
+#'   for each Ordinal variable and `NULL` for each non-Ordinal variable.
 #' @param corr Logical. Correlations or covariances
 #' @return A Jacobian matrix of numerical derivatives.
 #' @importFrom numDeriv jacobian
 #' @keywords internal
 
-numderiv <- function(data, cov_x_hat, d, p, n, family, corr) {
+numderiv <- function(data, cov_x_hat, d, p, n, family, ordinal_levels, corr) {
 
-  param_hat_full <- estimate_marginal_params(data, family, d)
+  param_hat_full <- estimate_marginal_params(data, family, ordinal_levels, d)
 
   x1 <- c()
 
@@ -25,9 +27,11 @@ numderiv <- function(data, cov_x_hat, d, p, n, family, corr) {
 
     } else if (family[[i]] == "Ordinal") {
 
-      # Only p0 and p1 are free.
-      # p2 is reconstructed as 1 - p0 - p1.
-      x1 <- c(x1, param_hat_full[[i]][1:2])
+      probs_i <- param_hat_full[[i]]
+      n_free <- length(probs_i) - 1L
+
+      # The final probability is determined by the first K - 1.
+      x1 <- c(x1, probs_i[seq_len(n_free)])
 
     } else if (family[[i]] == "Gaussian") {
 
@@ -45,7 +49,7 @@ numderiv <- function(data, cov_x_hat, d, p, n, family, corr) {
 
   x <- c(x1, x2)
 
-  func <- function(x, d, marg_num, p, n, data, family, corr) {
+  func <- function(x, d, marg_num, p, n, data, family, ordinal_levels, corr) {
 
     param_hat <- vector("list", d)
 
@@ -60,21 +64,26 @@ numderiv <- function(data, cov_x_hat, d, p, n, family, corr) {
 
       } else if (family[[i]] == "Ordinal") {
 
-        p0 <- x[j]
-        p1 <- x[j + 1]
-        p2 <- 1 - p0 - p1
+        n_levels <- length(ordinal_levels[[i]])
+        n_free <- n_levels - 1L
 
-        # Small numerical protection for numDeriv perturbations.
-        probs <- c(p0, p1, p2)
+        free_indices <- j + seq_len(n_free) - 1L
+        free_probs <- x[free_indices]
 
-        if (any(probs <= 0) || any(probs >= 1)) {
-          probs <- pmax(probs, 1e-8)
-          probs <- probs / sum(probs)
+        final_prob <- 1 - sum(free_probs)
+        probs <- c(free_probs, final_prob)
+
+        # Check probabilities after numerical perturbation.
+        if (any(!is.finite(probs)) || any(probs <= 0) || any(probs >= 1)
+        ) {
+          stop(
+            "Invalid probabilities obtained during differentiation",
+            call. = FALSE
+          )
         }
 
         param_hat[[i]] <- probs
-
-        j <- j + 2
+        j <- j + n_free
 
       } else if (family[[i]] == "Gaussian") {
 
@@ -100,6 +109,7 @@ numderiv <- function(data, cov_x_hat, d, p, n, family, corr) {
       n = n,
       param_hat = param_hat,
       family = family,
+      ordinal_levels = ordinal_levels,
       corr = corr
     )
 
@@ -128,6 +138,7 @@ numderiv <- function(data, cov_x_hat, d, p, n, family, corr) {
     n = n,
     data = data,
     family = family,
+    ordinal_levels = ordinal_levels,
     corr = corr
   )
 

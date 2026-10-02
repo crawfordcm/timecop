@@ -26,6 +26,8 @@ check_timecop <- function(object) {
 #' @slot n Numeric. Time series length
 #' @slot marg_num Numeric. Total number of marginal parameters
 #' @slot family List. A list of marginal distributions
+#' @slot ordinal_levels List. A list of length d containing the numeric levels
+#'   for each Ordinal variable and `NULL` for each non-Ordinal variable.
 #' @slot pd_approx Logical. A logical indicating if adjustments were made to ensure positive definiteness
 #' @slot corr Logical. A logical indicating if observed correlations or covariances were used
 #' @export
@@ -44,6 +46,7 @@ setClass(
     n = "numeric",
     marg_num = "numeric",
     family = "list",
+    ordinal_levels = "list",
     pd_approx = "logical",
     corr = "logical"
   ), validity = check_timecop
@@ -57,7 +60,8 @@ setClass(
 #'
 #' @param data Matrix. An n (time points) by d (variables) multivariate time series matrix
 #' @param family List. A list of length d with the names of each distribution.
-#'   Supported values: `"Bernoulli"`, `"Poisson"`, `"Gaussian"`.
+#'   Supported values: `"Bernoulli"`, `"Poisson"`, `"Ordinal`, `"Gaussian"`.
+#' @param ordinal_levels List. A list containing one numeric vector of levels for each ordinal variable.
 #' @param p Numeric. The VAR order. Default is 1. Only p=1 is currently supported.
 #' @param corr Logical. Use correlations instead of covariances. Default is `FALSE`.
 #' @param pd_approx Logical. Check if latent covariance matrices are PD and
@@ -78,6 +82,7 @@ setClass(
 #' @export
 timecop <- function(data = NULL,
                     family = NULL,
+                    ordinal_levels = NULL,
                     p = 1,
                     corr = FALSE,
                     pd_approx = FALSE,
@@ -113,18 +118,50 @@ timecop <- function(data = NULL,
   # check if marginals are correctly specified
   check_marginals(family, d)
 
-  # get total number of marginal parameters
-  if ("Gaussian" %in% family) {
-    marg_num <- d + length(which(family == "Gaussian"))
+  # setup ordinal_levels list
+  if ("Ordinal" %in% family) {
+    ordinal_levels <- setup_ordinal_levels(
+      data = data,
+      family = family,
+      ordinal_levels = ordinal_levels,
+      d = d
+    )
   } else {
-    marg_num <- d
+    if (!is.null(ordinal_levels) && length(ordinal_levels) > 0L) {
+      stop(
+        "'ordinal_levels' was supplied, but no variables use the Ordinal family",
+        call. = FALSE
+      )
+    }
+    ordinal_levels <- vector("list", d)
+  }
+
+  # get total number of marginal parameters
+  marg_num <- 0L
+
+  for (i in seq_len(d)) {
+    if (family[[i]] %in% c("Bernoulli", "Poisson")) {
+
+      marg_num <- marg_num + 1L
+
+    } else if (family[[i]] == "Gaussian") {
+
+      # Mean and variance
+      marg_num <- marg_num + 2L
+
+    } else if (family[[i]] == "Ordinal") {
+
+      # K - 1 free probabilities
+      K <- length(ordinal_levels[[i]])
+      marg_num <- marg_num + K - 1L
+    }
   }
 
   k <- 100
 
   # compute observed and latent covariances
   cov_x_hat  <- observed_var_cov(data, d, p, n, corr)
-  ell_ij_hat <- latent_var_link(data, d, n, k, family, corr)
+  ell_ij_hat <- latent_var_link(data, d, n, k, family, ordinal_levels, corr)
   cov_z_hat  <- latent_var_invlink(cov_x_hat, d, p, ell_ij_hat)
 
   # construct covariance matrices for Yule-Walker
@@ -181,6 +218,7 @@ timecop <- function(data = NULL,
     n = n,
     marg_num = marg_num,
     family = family,
+    ordinal_levels = ordinal_levels,
     pd_approx = pd_approx,
     corr = corr
   )
@@ -238,6 +276,7 @@ setMethod(f = "fit_timecop", signature = "timecop", definition = function(object
     object@p,
     object@n,
     object@family,
+    object@ordinal_levels,
     object@marg_num,
     object@corr
   )

@@ -17,7 +17,8 @@
 #' @param p Numeric. The VAR order. Currently only \code{p = 1} is supported.
 #' @param param List. A list of length \code{d} containing marginal parameters.
 #'   For Bernoulli variables, the success probability; for Poisson variables,
-#'   the rate parameter. Gaussian variables do not currently use this value.
+#'   the rate parameter. For Ordinal variables, a vector of probabilities for each level.
+#'   For Gaussian variables, specify NULL.
 #' @param phi_lv Matrix. A \code{d} by \code{d} transition matrix for the latent
 #'   VAR process.
 #' @param family List. A list of length \code{d} with marginal distribution
@@ -54,6 +55,8 @@
 #'   \item{Y_mat_test}{Response matrix for latent data.}
 #'   \item{X_mat_test}{Predictor matrix for latent data.}
 #'   \item{param}{Input marginal parameters.}
+#'   \item{family}{A list of marginal distributions.}
+#'   \item{ordinal_levels}{A list of levels for ordinal variables.}
 #'
 #' @examples
 #' sim <- latent_var_sim(
@@ -269,42 +272,79 @@ latent_var_sim <- function(d, n, p, param, phi_lv, family,
   # get count data
   X_t <- array(NA, dim=c(d,n))
 
+  # initialize ordinal_levels list
+  ordinal_levels <- list()
+  ordinal_count <- 0
+
   for (i in 1:d){
     # allow for different marginals
     if (family[[i]] == "Bernoulli"){
 
-      Thrs <- qnorm(1 - param[[i]])
+      prob <- param[[i]]
+
+      Thrs <- qnorm(1 - prob)
 
       X_t[i,] <- (Z_t[i,] > Thrs) * 1
 
     } else if (family[[i]] == "Poisson"){
 
-      X_t[i,] <- qpois(pnorm(Z_t[i,]), param[[i]])
+      lambda <- param[[i]]
+
+      X_t[i,] <- qpois(pnorm(Z_t[i,]), lambda)
 
     } else if (family[[i]] == "Ordinal"){
 
-      prob <- param[[i]]
+      probs <- param[[i]]
 
-      if (length(prob) != 3) {
-        stop("For Ordinal family, param[[i]] must be c(p0, p1, p2).", call. = FALSE)
+      if (length(probs) < 3L) {
+
+        if (length(probs) == 2L) {
+          stop(
+            sprintf(
+              paste0(
+                "Ordinal variable %d has only two categories. ",
+                "Use the Bernoulli family instead."
+              ),
+              i
+            ),
+            call. = FALSE
+          )
+        }
+
+        stop(
+          sprintf(
+            "Ordinal variable %d must have at least three categories.",
+            i
+          ),
+          call. = FALSE
+        )
       }
 
-      if (any(prob < 0) || abs(sum(prob) - 1) > 1e-8) {
-        stop("For Ordinal family, probabilities must be nonnegative and sum to 1.", call. = FALSE)
+      if (!is.numeric(probs) || any(!is.finite(probs)) || any(probs <= 0) || abs(sum(probs) - 1) > 1e-8) {
+        stop(
+          sprintf(
+            paste0(
+              "For Ordinal variable %d, probabilities must be finite, ",
+              "strictly positive, and sum to 1."
+            ), i),
+          call. = FALSE
+        )
       }
 
-      Thrs <- c(
-        qnorm(prob[1]),
-        qnorm(prob[1] + prob[2])
-      )
+      n_levels <- length(probs)
 
-      X_t[i,] <- 0
-      X_t[i, Z_t[i,] > Thrs[1]] <- 1
-      X_t[i, Z_t[i,] > Thrs[2]] <- 2
+      thresholds <- qnorm(cumsum(probs)[seq_len(n_levels - 1L)])
+
+      X_t[i, ] <- findInterval(Z_t[i, ], thresholds)
+
+      ordinal_count <- ordinal_count + 1
+
+      ordinal_levels[[ordinal_count]] <- seq.int(from = 0, to = n_levels - 1)
 
     } else if (family[[i]] == "Gaussian"){
 
       X_t[i,] <- Z_t[i,]
+
     }
   }
 
@@ -328,6 +368,8 @@ latent_var_sim <- function(d, n, p, param, phi_lv, family,
   vec_bf_Y_test <- as.vector(Y_cal_Z)
   mat_cal_Z_test <- bdiag(replicate(d,X_cal_Z,simplify=FALSE))
 
+  # return NULL for ordinal_levels if no ordinal variables simulated
+  if(length(ordinal_levels) == 0) ordinal_levels <- NULL
 
   output <- list(
     X_t = X_t,
@@ -352,7 +394,8 @@ latent_var_sim <- function(d, n, p, param, phi_lv, family,
     Y_mat = Y_cal_X,
     X_mat = X_cal_X,
 
-    family = family
+    family = family,
+    ordinal_levels = ordinal_levels
   )
 
   return(output)

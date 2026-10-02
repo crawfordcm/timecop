@@ -6,9 +6,18 @@ test_that("latent_var_invlink returns correct dimensions", {
   p <- 1
   k <- 100
   family <- list("Bernoulli", "Bernoulli")
+  ordinal_levels <- vector("list", d)
 
   cov_x_hat <- timecop:::observed_var_cov(data, d, p, n, corr = FALSE)
-  ell_ij_hat <- timecop:::latent_var_link(data, d, n, k, family, corr = FALSE)
+  ell_ij_hat <- timecop:::latent_var_link(
+    data = data,
+    d = d,
+    n = n,
+    k = k,
+    family = family,
+    ordinal_levels = ordinal_levels,
+    corr = FALSE
+  )
   result <- timecop:::latent_var_invlink(cov_x_hat, d, p, ell_ij_hat)
 
   expect_equal(dim(result), dim(cov_x_hat))
@@ -22,9 +31,18 @@ test_that("latent_var_invlink values are finite", {
   p <- 1
   k <- 100
   family <- list("Bernoulli", "Bernoulli")
+  ordinal_levels <- vector("list", d)
 
   cov_x_hat <- timecop:::observed_var_cov(data, d, p, n, corr = FALSE)
-  ell_ij_hat <- timecop:::latent_var_link(data, d, n, k, family, corr = FALSE)
+  ell_ij_hat <- timecop:::latent_var_link(
+    data = data,
+    d = d,
+    n = n,
+    k = k,
+    family = family,
+    ordinal_levels = ordinal_levels,
+    corr = FALSE
+  )
   result <- timecop:::latent_var_invlink(cov_x_hat, d, p, ell_ij_hat)
 
   expect_true(all(is.finite(result)))
