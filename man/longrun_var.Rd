@@ -4,7 +4,7 @@
 \alias{longrun_var}
 \title{Compute long-run variance}
 \usage{
-longrun_var(data, d, n, family)
+longrun_var(data, d, n, family, ordinal_levels)
 }
 \arguments{
 \item{data}{Matrix. A d by n multivariate time series matrix}
@@ -14,6 +14,9 @@ longrun_var(data, d, n, family)
 \item{n}{Numeric. Time series length}
 
 \item{family}{List. A list of marginal distributions}
+
+\item{ordinal_levels}{List. A list of length d containing the numeric levels
+for each Ordinal variable and \code{NULL} for each non-Ordinal variable.}
 }
 \value{
 A long-run variance-covariance matrix.

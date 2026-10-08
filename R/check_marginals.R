@@ -16,7 +16,7 @@ check_marginals <- function(family, d) {
   }
 
   # supported marginals
-  supported <- list("Bernoulli", "Poisson", "Gaussian")
+  supported <- list("Bernoulli", "Poisson", "Ordinal", "Gaussian")
 
   # indices of incorrect marginals
   bad_idx <- which(!family %in% supported)

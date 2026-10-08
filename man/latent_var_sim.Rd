@@ -24,7 +24,8 @@ latent_var_sim(
 
 \item{param}{List. A list of length \code{d} containing marginal parameters.
 For Bernoulli variables, the success probability; for Poisson variables,
-the rate parameter. Gaussian variables do not currently use this value.}
+the rate parameter. For Ordinal variables, a vector of probabilities for each level.
+For Gaussian variables, specify NULL.}
 
 \item{phi_lv}{Matrix. A \code{d} by \code{d} transition matrix for the latent
 VAR process.}
@@ -66,6 +67,8 @@ covariance was specified: \code{"identity"}, \code{"covariance"}, or
 \item{Y_mat_test}{Response matrix for latent data.}
 \item{X_mat_test}{Predictor matrix for latent data.}
 \item{param}{Input marginal parameters.}
+\item{family}{A list of marginal distributions.}
+\item{ordinal_levels}{A list of levels for ordinal variables.}
 }
 \description{
 Generates a multivariate discrete-valued time series from a latent Gaussian

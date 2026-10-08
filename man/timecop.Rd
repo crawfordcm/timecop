@@ -7,6 +7,7 @@
 timecop(
   data = NULL,
   family = NULL,
+  ordinal_levels = NULL,
   p = 1,
   corr = FALSE,
   pd_approx = FALSE,
@@ -17,7 +18,9 @@ timecop(
 \item{data}{Matrix. An n (time points) by d (variables) multivariate time series matrix}
 
 \item{family}{List. A list of length d with the names of each distribution.
-Supported values: \code{"Bernoulli"}, \code{"Poisson"}, \code{"Gaussian"}.}
+Supported values: \code{"Bernoulli"}, \code{"Poisson"}, \verb{"Ordinal}, \code{"Gaussian"}.}
+
+\item{ordinal_levels}{List. A list containing one numeric vector of levels for each ordinal variable.}
 
 \item{p}{Numeric. The VAR order. Default is 1. Only p=1 is currently supported.}
 

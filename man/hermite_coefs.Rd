@@ -4,7 +4,7 @@
 \alias{hermite_coefs}
 \title{Compute Hermite coefficients}
 \usage{
-hermite_coefs(param, k, family)
+hermite_coefs(param, k, family, ordinal_levels)
 }
 \arguments{
 \item{param}{Numeric. Estimate of marginal parameter}
@@ -12,6 +12,8 @@ hermite_coefs(param, k, family)
 \item{k}{Numeric. The value at which Hermite coefficient infinite sums terminate. Default is 100}
 
 \item{family}{Character. Name of marginal distribution}
+
+\item{ordinal_levels}{Numeric. A vector of levels for Ordinal family and NULL otherwise}
 }
 \value{
 A numeric vector of k Hermite coefficients.

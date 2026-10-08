@@ -30,6 +30,9 @@ An object to be used with fit_timecop
 
 \item{\code{family}}{List. A list of marginal distributions}
 
+\item{\code{ordinal_levels}}{List. A list of length d containing the numeric levels
+for each Ordinal variable and \code{NULL} for each non-Ordinal variable.}
+
 \item{\code{pd_approx}}{Logical. A logical indicating if adjustments were made to ensure positive definiteness}
 
 \item{\code{corr}}{Logical. A logical indicating if observed correlations or covariances were used}

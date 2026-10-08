@@ -64,6 +64,7 @@ test_that("Mixed Bernoulli+Gaussian estimates and SEs are unchanged (seed 7)", {
   )
 
   expect_equal(fit$estimates, expected_est, tolerance = 1e-6)
+  # NOTE: If this SE check fails, see the Gaussian time-index TODO in R/longrun_var.R.
   expect_equal(fit$se,        expected_se,  tolerance = 1e-5)
 })
 

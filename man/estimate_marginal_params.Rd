@@ -4,12 +4,15 @@
 \alias{estimate_marginal_params}
 \title{Estimate marginal parameters from data}
 \usage{
-estimate_marginal_params(data, family, d)
+estimate_marginal_params(data, family, ordinal_levels, d)
 }
 \arguments{
 \item{data}{Matrix. A d by n multivariate time series matrix}
 
 \item{family}{List. A list of length d with the names of each distribution}
+
+\item{ordinal_levels}{List. A list of length d containing the numeric levels
+for each Ordinal variable and \code{NULL} for each non-Ordinal variable.}
 
 \item{d}{Numeric. The number of variables}
 }

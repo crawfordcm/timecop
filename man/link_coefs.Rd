@@ -4,14 +4,17 @@
 \alias{link_coefs}
 \title{Compute Hermite coefficients and link function constants}
 \usage{
-link_coefs(param_list, k, family_list, corr)
+link_coefs(param_list, k, family_list, ordinal_levels, corr)
 }
 \arguments{
-\item{param_list}{List. A list of marginal parameters}
+\item{param_list}{List. A two-entry list of marginal parameters}
 
 \item{k}{Numeric. The value at which Hermite coefficient infinite sums terminate. Default is 100}
 
-\item{family_list}{List. List of marginal distributions}
+\item{family_list}{List. A two-entry list of marginal distributions}
+
+\item{ordinal_levels}{List. A two-entry list containing the ordinal levels
+for each variable and \code{NULL} for non-Ordinal variables.}
 
 \item{corr}{Logical. Correlations or covariances}
 }

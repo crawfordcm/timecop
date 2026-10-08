@@ -8,6 +8,8 @@
 #' @param p Numeric. The VAR order
 #' @param n Numeric. Time series length
 #' @param family List. A list of marginal distributions
+#' @param ordinal_levels List. A list of length d containing the numeric levels
+#'   for each Ordinal variable and `NULL` for each non-Ordinal variable.
 #' @param marg_num Numeric. The total number of marginal parameters
 #' @param corr Logical. Correlations or covariances (SEs only available for covariances)
 #' @return A d x d matrix of standard errors for the VAR(1) coefficient estimates.
@@ -21,10 +23,11 @@ se_var <- function(data,
                    p,
                    n,
                    family,
+                   ordinal_levels,
                    marg_num,
                    corr) {
 
-  jacob <- numderiv(data, cov_x_hat, d, p, n, family, corr)
+  jacob <- numderiv(data, cov_x_hat, d, p, n, family, ordinal_levels, corr)
 
   # derivs wrt marginal params
   f1 <- jacob[1:d^2, 1:marg_num]
@@ -60,7 +63,7 @@ se_var <- function(data,
   Q1 <- rbind(vec(gamma_deriv),vec(Gamma_deriv))
   Q2 <- rbind(C,E)
 
-  Sigma <- longrun_var(data, d, n, family)
+  Sigma <- longrun_var(data, d, n, family, ordinal_levels)
 
   sigma11 <- Sigma[1:marg_num,1:marg_num]
   sigma21 <- Sigma[(marg_num+1):(marg_num+(p+1)^2*d^2),1:marg_num]
