@@ -34,7 +34,13 @@ longrun_var <- function(data, d, n, family, ordinal_levels) {
     b2 <- xt %*% t(xt)
     b  <- vec(rbind(b1, b2))
 
-    # added Ordinal-Ordinal case
+    # Preserve the previous time alignment: if any Gaussian variable is
+    # present, evaluate all marginal components at time i; otherwise use
+    # time i - 1. TODO: Verify the theoretically correct common time index
+    # for the marginal estimating functions in the long-run variance.
+    marginal_time <- if ("Gaussian" %in% family) i else i - 1L
+
+    # construct marginal estimating-function components
     rt <- numeric(0)
 
     for (j in seq_along(family)) {
@@ -43,7 +49,7 @@ longrun_var <- function(data, d, n, family, ordinal_levels) {
 
         levels_j <- ordinal_levels[[j]]
         probs_j <- param_hat[[j]]
-        x_raw <- data[j, i - 1L]
+        x_raw <- data[j, marginal_time]
 
         # Only K - 1 probabilities are free parameters.
         ordinal_scores <- vapply(
@@ -58,13 +64,7 @@ longrun_var <- function(data, d, n, family, ordinal_levels) {
 
       } else if (family[[j]] == "Gaussian") {
 
-        # TODO: Confirm the correct time index for the marginal estimating-function
-        # components. The previous Gaussian implementation used dat_c[j, i] through
-        # xt[j], whereas the current implementation uses dat_c[j, i - 1L], consistent
-        # with the Ordinal, Bernoulli, and Poisson components. Verify this choice
-        # against the long-run variance derivation and Gaussian benchmark tests.
-
-        x_centered <- dat_c[j, i - 1L]
+        x_centered <- dat_c[j, marginal_time]
 
         # Gaussian has two marginal parameters.
         rt <- c(
@@ -76,7 +76,7 @@ longrun_var <- function(data, d, n, family, ordinal_levels) {
       } else {
 
         # Bernoulli and Poisson each have one marginal parameter.
-        rt <- c(rt, dat_c[j, i - 1L])
+        rt <- c(rt, dat_c[j, marginal_time])
       }
     }
 
@@ -98,4 +98,3 @@ longrun_var <- function(data, d, n, family, ordinal_levels) {
 
   return(Sigma)
 }
-
