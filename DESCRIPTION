@@ -6,7 +6,8 @@ Authors@R: c(
     person("Younghoon", "Kim", role = "aut"),
     person("Zachary","Fisher", email = "fish.zachary@gmail.com", role = c("ctb")),
     person("Vladas", "Pipiras", role = "ctb"),
-    person("Duker", "Marie", role = "ctb")
+    person("Duker", "Marie", role = "ctb"),
+    person("Kundu", "Soumyajyoti", role = "ctb")
     )
 Description: Estimates latent Gaussian vector autoregressive (VAR) models for
     discrete-valued multivariate time series. Supports Bernoulli, Poisson, and
