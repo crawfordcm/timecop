@@ -12,3 +12,6 @@ IMPROVEMENT_PLAN.md
 CLAUDE.md
 CODE_REVIEW.md
 AGENTS.md
+/multitask_code_review.md
+/multitask_graphical_var_math.md
+/multitask_precision_grid_diagnosis.md
