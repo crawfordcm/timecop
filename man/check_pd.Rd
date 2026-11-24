@@ -2,24 +2,71 @@
 % Please edit documentation in R/check_pd.R
 \name{check_pd}
 \alias{check_pd}
-\title{Check if covariance matrices are PD}
+\title{Repair the joint latent covariance to be positive definite}
 \usage{
-check_pd(gamma_hat, Gamma_hat, d, eig.tol)
+check_pd(
+  S10,
+  S0,
+  d,
+  eig.tol = 1e-06,
+  pd.tol = 1e-08,
+  conv.tol = 1e-08,
+  maxit = 50L,
+  correlation = TRUE
+)
 }
 \arguments{
-\item{gamma_hat}{Matrix. Stacked covariance matrix}
+\item{S10}{Matrix. d x d lag-1 latent covariance, Cov(z_t, z_{t-1}).}
 
-\item{Gamma_hat}{Matrix. Toeplitz covariance matrix}
+\item{S0}{Matrix. d x d lag-0 latent covariance (symmetrized on entry).}
 
-\item{d}{Numeric. The number of variables}
+\item{d}{Numeric. The number of variables.}
 
-\item{eig.tol}{Numeric. Eigen tolerance}
+\item{eig.tol}{Numeric. Eigenvalue tolerance passed to nearPD. Default 1e-6.}
+
+\item{pd.tol}{Numeric. Minimum eigenvalue above which a matrix counts as
+positive definite. Default 1e-8.}
+
+\item{conv.tol}{Numeric. Relative-change tolerance for detecting a stalled
+alternation. Default 1e-8.}
+
+\item{maxit}{Integer. Maximum alternating-projection iterations. Default 50.}
+
+\item{correlation}{Logical. Treat the matrices as correlation-scale (unit
+diagonal enforced, nearPD run with corr = TRUE). Default TRUE.}
 }
 \value{
-A list of two matrices: the (possibly adjusted) \code{gamma_hat} and
-\code{Gamma_hat}.
+A list with the repaired \code{S10} and \code{S0} (in that order),
+plus diagnostics: \code{repaired}, \code{alternating_converged} (only when
+repaired), \code{iterations}, and \code{min_eigenvalue} of the final
+joint matrix.
 }
 \description{
-Check if covariance matrices are PD
+Projects the joint lag-0/lag-1 latent covariance matrix onto the
+intersection of (i) the positive-definite cone and (ii) the stationary
+block-Toeplitz structure
+J = rbind(cbind(S0, t(S10)), cbind(S10, S0))
+(equal diagonal blocks, transpose-consistent off-diagonal blocks). Joint
+positive definiteness of J guarantees a positive semidefinite innovation
+covariance S_eps(B) = (I, -B) J (I, -B)' for EVERY transition matrix B, so a
+single repair at construction covers all downstream estimation.
+}
+\details{
+A single nearPD() call is not sufficient: it projects onto the PSD cone
+WITHOUT the structure constraint, so its output generally has two different
+diagonal blocks. Extracting one of them and reassembling the structured
+matrix can land outside the PSD cone again (this was the bug that let
+pd_approx = TRUE return non-PD joint matrices). The alternation below
+projects onto the PSD cone (nearPD), then onto the structure set (average
+the diagonal blocks; average the off-diagonal blocks with their
+transposes), and repeats until the STRUCTURED matrix itself is positive
+definite; both sets are convex. If the alternation stalls, a fallback
+shrinks the lag-1 block toward zero, whose block-diagonal limit is positive
+definite once S0 is.
+
+With \code{correlation = TRUE} (the latent scale is unit-variance by
+construction) the diagonal of S0 is set to exactly 1 before any check, so
+even the "no repair needed" path standardizes the diagonal. Assumes VAR
+order p = 1 (a two-block Toeplitz structure).
 }
 \keyword{internal}

@@ -39,7 +39,7 @@ interpolation <- function(coef,u,v){
       while(v[i] > knot[idx]){
         idx <- idx+1;
       }
-      idx <- idx-1;
+      idx <- max(idx-1, 1); # floor at 1: v exactly on knot[1] would give idx 0
       First_term <- d[(idx+1)]*(v[i]-knot[idx])^3/(6*h[(idx+1)])
       Second_term <- d[idx]*(knot[(idx+1)]-v[i])^3/(6*h[(idx+1)])
       Third_term <- c[1,idx]*(v[i]-knot[idx])
