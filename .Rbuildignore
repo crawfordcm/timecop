@@ -6,6 +6,7 @@
 ^\.github$
 ^Rplots\.pdf$
 ^CLAUDE\.md$
+^AGENTS\.md$
 ^data-raw$
 ^\.positai$
 ^\.claude$

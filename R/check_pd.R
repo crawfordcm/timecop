@@ -26,7 +26,8 @@
 #' even the "no repair needed" path standardizes the diagonal. Assumes VAR
 #' order p = 1 (a two-block Toeplitz structure).
 #'
-#' @param S10 Matrix. d x d lag-1 latent covariance, Cov(z_t, z_{t-1}).
+#' @param S10 Matrix. d x d lag-1 latent covariance,
+#'   \eqn{\mathrm{Cov}(z_t, z_{t-1})}{Cov(z[t], z[t-1])}.
 #' @param S0 Matrix. d x d lag-0 latent covariance (symmetrized on entry).
 #' @param d Numeric. The number of variables.
 #' @param eig.tol Numeric. Eigenvalue tolerance passed to nearPD. Default 1e-6.

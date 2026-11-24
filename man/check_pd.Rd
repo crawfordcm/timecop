@@ -16,7 +16,8 @@ check_pd(
 )
 }
 \arguments{
-\item{S10}{Matrix. d x d lag-1 latent covariance, Cov(z_t, z_{t-1}).}
+\item{S10}{Matrix. d x d lag-1 latent covariance,
+\eqn{\mathrm{Cov}(z_t, z_{t-1})}{Cov(z[t], z[t-1])}.}
 
 \item{S0}{Matrix. d x d lag-0 latent covariance (symmetrized on entry).}
 
